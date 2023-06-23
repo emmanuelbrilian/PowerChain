@@ -116,6 +116,15 @@ def logout():
 @is_logged_in 
 def dashboard():
     return render_template ('dashboard.html')
+
+#Peers
+@app.route('/peers')
+@is_logged_in
+def peers():
+    # Mengambil informasi pengguna dari basis data
+    users = collection.find()
+
+    return render_template('peers.html', users=users)
     
 
 if __name__ == '__main__':
