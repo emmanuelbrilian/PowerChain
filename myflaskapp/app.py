@@ -3,7 +3,9 @@ from pymongo import MongoClient
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-
+import json
+from web3 import Web3
+from web3.auto import w3
 
 app = Flask(__name__)
 
@@ -11,6 +13,9 @@ app = Flask(__name__)
 client = MongoClient('mongodb://localhost:27017/')
 db = client['mydatabase']
 collection = db['users']
+
+# Koneksi ke Ganache
+w3 = Web3(Web3.HTTPProvider('http://localhost:7545'))
 
 #Index
 @app.route('/')
@@ -51,6 +56,13 @@ def register():
         }
         collection.insert_one(user_data)
 
+        # Menghubungkan dengan akun Ganache
+        accounts = w3.eth.accounts
+        selected_account = accounts[0]
+        collection.update_one(
+            {'username': username},
+            {'$set': {'address': selected_account}}
+        )
         flash('You are now registered and can log in', 'success')
         return redirect(url_for('index'))
 
