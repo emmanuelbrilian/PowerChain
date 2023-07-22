@@ -13,6 +13,7 @@ app = Flask(__name__)
 client = MongoClient('mongodb://localhost:27017/')
 db = client['mydatabase']
 collection = db['users']
+purchase_collection = db['energy_purchase']
 
 # Koneksi ke Ganache
 w3 = Web3(Web3.HTTPProvider('http://localhost:7545'))
@@ -127,7 +128,13 @@ def logout():
 @app.route ('/dashboard')
 @is_logged_in 
 def dashboard():
-    return render_template ('dashboard.html')
+     # Retrieve the data for the dashboard from your database or any other source
+    energy_sold = "250 kWh"
+    energy_purchased = "150 kWh"
+    current_energy = "100 kWh"
+    ethereum_balance = "2.5 ETH"
+    ethereum_used = "1.8 ETH"
+    return render_template('dashboard.html', energy_sold=energy_sold, energy_purchased=energy_purchased, current_energy=current_energy, ethereum_balance=ethereum_balance, ethereum_used=ethereum_used)
 
 #Peers
 @app.route('/peers')
@@ -137,6 +144,34 @@ def peers():
     users = collection.find()
 
     return render_template('peers.html', users=users)
+
+
+@app.route('/purchase', methods=['GET', 'POST'])
+@is_logged_in
+def purchase():
+    if request.method == 'POST':
+        # Get user data from the database
+        user_data = collection.find_one({'username': session['username']})
+        name = user_data['name']
+        email = user_data['email']
+        address = user_data['address']
+
+        # Get amount from the form
+        amount = request.form['amount']
+
+        # Save energy purchase data to the "energi_pembelian" collection
+        purchase_data = {
+            'name': name,
+            'email': email,
+            'address': address,
+            'amount': amount
+        }
+        purchase_collection.insert_one(purchase_data)
+
+        flash('Your order is being processed', 'success')
+        return redirect(url_for('dashboard'))
+
+    return render_template('purchase.html')
     
 
 if __name__ == '__main__':

@@ -1,5 +1,65 @@
-{% extends 'layout.html'%}
+{% extends 'layout.html' %}
 
 {% block body %}
-    <h1> Dashboard <small> Welcome {{session.username}}</small></h1>
+    <h1>Dashboard <small>Welcome {{ session.username }}</small></h1>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <div class="info-box">
+    <div class="info-title">Amount of Energy Sold</div>
+    <div class="info-value-table">
+      <table>
+        <tr>
+          <td>{{ energy_sold }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="info-box">
+    <div class="info-title">Amount of Energy Purchased</div>
+    <div class="info-value-table">
+      <table>
+        <tr>
+          <td>{{ energy_purchased }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="info-box">
+    <div class="info-title">Current Amount of Energy</div>
+    <div class="info-value-table">
+      <table>
+        <tr>
+          <td>{{ current_energy }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="info-box">
+    <div class="info-title">Current Ethereum Balance</div>
+    <div class="info-value-table">
+      <table>
+        <tr>
+          <td>{{ ethereum_balance }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="info-box">
+    <div class="info-title">Amount of Ethereum Used</div>
+    <div class="info-value-table">
+      <table>
+        <tr>
+          <td>{{ ethereum_used }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add the "Purchase Energy" button here -->
+<div class="text-center">
+    <a href="{{ url_for('purchase') }}" class="btn btn-primary">Purchase Energy</a>
+</div>
 {% endblock %}

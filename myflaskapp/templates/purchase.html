@@ -1,0 +1,12 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <h1>Purchase Menu</h1>
+    <form method="POST" action="{{ url_for('purchase') }}">
+        <div class="form-group">
+            <label for="amount">Amount of Energy to be Purchased:</label>
+            <input type="text" class="form-control" id="amount" name="amount" placeholder="Masukkan jumlah kWh">
+        </div>
+        <button type="submit" class="btn btn-primary">Buy</button>
+    </form>
+{% endblock %}
