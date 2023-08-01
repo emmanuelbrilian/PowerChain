@@ -6,7 +6,8 @@ from functools import wraps
 import json
 from web3 import Web3
 from web3.auto import w3
-
+from geopy.geocoders import Nominatim
+#pass email Pc_123456
 app = Flask(__name__)
 
 # Koneksi ke MongoDB
@@ -37,6 +38,9 @@ class RegisterForm(Form):
         validators.EqualTo('confirm', message='Password Do Not Match')
     ])
     confirm = PasswordField('Confirm Password')
+    # Modify the field for coordinates
+    coordinates = StringField('Coordinates', [validators.DataRequired()])
+
 
 # Route untuk halaman registrasi
 @app.route('/register', methods=['GET', 'POST'])
@@ -47,27 +51,42 @@ def register():
         email = form.email.data
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
+        coordinates = form.coordinates.data  # Get the coordinates from the form
 
-        # Memasukkan data pengguna ke dalam basis data MongoDB
+        # Use Geopy to validate and process the coordinates if needed
+        geolocator = Nominatim(user_agent="myGeocoder")
+        location = geolocator.reverse(coordinates)
+        geo_address = location.address if location else ""
+
+        # Check if the email is already registered
+        if collection.find_one({'email': email}):
+            flash('Email already registered. Please use a different email.', 'danger')
+            return render_template('register.html', form=form)
+
+        # Save the user data to the database, including the coordinates and address
         user_data = {
             'name': name,
             'email': email,
             'username': username,
-            'password': password
+            'password': password,
+            'geo_coordinates': coordinates,  # Saving the coordinates from Geopy
+            'geo_address': geo_address  # Saving the address from Geopy
         }
         collection.insert_one(user_data)
 
         # Menghubungkan dengan akun Ganache
         accounts = w3.eth.accounts
-        selected_account = accounts[0]
+        bcaddress = accounts[0]
         collection.update_one(
             {'username': username},
-            {'$set': {'address': selected_account}}
+            {'$set': {'bcaddress': bcaddress}}  # Saving the Ganache address (bcaddress)
         )
+
         flash('You are now registered and can log in', 'success')
         return redirect(url_for('index'))
 
     return render_template('register.html', form=form)
+
 
 #userlogin
 @app.route('/login', methods=['GET', 'POST'])
@@ -152,18 +171,14 @@ def purchase():
     if request.method == 'POST':
         # Get user data from the database
         user_data = collection.find_one({'username': session['username']})
-        name = user_data['name']
-        email = user_data['email']
-        address = user_data['address']
+        user_id = user_data['_id']  # Get the user ID from the database
 
         # Get amount from the form
         amount = request.form['amount']
 
         # Save energy purchase data to the "energi_pembelian" collection
         purchase_data = {
-            'name': name,
-            'email': email,
-            'address': address,
+            'user_id': user_id,  # Save the user ID in the "energi_pembelian" collection
             'amount': amount
         }
         purchase_collection.insert_one(purchase_data)
