@@ -10,7 +10,7 @@ from web3.middleware import geth_poa_middleware
 from geopy.geocoders import Nominatim
 import random
 from math import radians, sin, cos, sqrt, atan2
-
+from geopy.distance import geodesic
 
 
 #pass email Pc_123456
@@ -182,7 +182,7 @@ def dashboard():
     
     
     # You can do the same for the ethereum_used value if needed
-    return render_template('dashboard.html', energy_sold=f"{energy_sold} kWh", energy_purchased=f"{energy_purchased} kWh", current_energy=f"{current_energy} kWh", ethereum_balance=f"{ethereum_balance} kWh", ethereum_used=f"{ethereum_used} kWh")
+    return render_template('dashboard.html', energy_sold=f"{energy_sold} kWh", energy_purchased=f"{energy_purchased} kWh", current_energy=f"{current_energy} kWh", ethereum_balance=f"{ethereum_balance} ETH", ethereum_used=f"{ethereum_used} kWh")
 
 #Peers
 @app.route('/peers')
@@ -199,18 +199,10 @@ def calculate_distance(coord1, coord2):
     lat1, lon1 = map(float, coord1.split())
     lat2, lon2 = map(float, coord2.split())
 
-    # Convert latitude and longitude from degrees to radians
-    lat1_rad, lon1_rad = radians(lat1), radians(lon1)
-    lat2_rad, lon2_rad = radians(lat2), radians(lon2)
-
-    # Haversine formula
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-    a = sin(dlat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    distance_km = 6371 * c
-
+    # Use geodesic from geopy to calculate the distance
+    distance_km = geodesic((lat1, lon1), (lat2, lon2)).kilometers
     return distance_km
+
 
 @app.route('/purchase', methods=['GET', 'POST'])
 @is_logged_in
