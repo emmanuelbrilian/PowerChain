@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block title %}Peer Notifications{% endblock %}
+
+{% block content %}
+<body>
+    <h1>Peer Notifications</h1>
+    <div class="notification-container">
+        {% for seller in selected_sellers %}
+            <div class="notification alert alert-info">
+                <p><strong>New Order Request:</strong></p>
+                <p>Requested by: {{ seller.buyer_username }}</p> <!-- Menggunakan seller.buyer_username -->
+                <p>Energy Requested: {{ seller.amount }} kWh</p>
+                <a href="{{ url_for('approve_order', order_id=seller._id) }}" class="btn btn-success">Approve</a>
+                <a href="{{ url_for('decline_order', order_id=seller._id) }}" class="btn btn-danger">Decline</a>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+{% endblock %}

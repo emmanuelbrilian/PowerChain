@@ -11,17 +11,22 @@ from geopy.geocoders import Nominatim
 import random
 from math import radians, sin, cos, sqrt, atan2
 from geopy.distance import geodesic
+from flask_wtf.csrf import CSRFProtect
+from wtforms import StringField, validators
+from flask_wtf.csrf import CSRFProtect, CSRFError,generate_csrf, validate_csrf
+
 
 
 #pass email Pc_123456
 app = Flask(__name__)
+
 
 # Koneksi ke MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['mydatabase']
 collection = db['users']
 purchase_collection = db['energy_purchase']
-hasil_pemilihan_peer_collection = db['hasil_pemilihan_peer']
+peer_selection_collection = db['peer_selection']
 
 # Koneksi ke Ganache
 w3 = Web3(Web3.HTTPProvider('http://localhost:7545'))
@@ -159,11 +164,10 @@ def logout():
         return redirect(url_for('login'))
 
 # Dashboard
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 @is_logged_in
 def dashboard():
     # Retrieve the data for the dashboard from your database or any other source
-    
 
     # Connect to Ganache and retrieve the ethereum balance and used values
     ganache_account = w3.eth.accounts[0]
@@ -179,10 +183,19 @@ def dashboard():
     current_energy = user_data['current_energy']
     energy_sold = user_data['energy_sold']
     energy_purchased = user_data['energy_purchased']
-    
-    
-    # You can do the same for the ethereum_used value if needed
-    return render_template('dashboard.html', energy_sold=f"{energy_sold} kWh", energy_purchased=f"{energy_purchased} kWh", current_energy=f"{current_energy} kWh", ethereum_balance=f"{ethereum_balance} ETH", ethereum_used=f"{ethereum_used} kWh")
+
+   
+
+    # Render the dashboard template with the form
+    return render_template(
+    'dashboard.html',
+    energy_sold=f"{energy_sold} kWh",
+    energy_purchased=f"{energy_purchased} kWh",
+    current_energy=f"{current_energy} kWh",
+    ethereum_balance=f"{ethereum_balance} ETH",
+    ethereum_used=f"{ethereum_used} kWh",
+)
+
 
 #Peers
 @app.route('/peers')
@@ -216,21 +229,15 @@ def purchase():
         # Get amount from the form and convert it to integer
         amount_requested = int(request.form['amount'])
 
-        # Save energy purchase data to the "energy_purchase" collection
-        purchase_data = {
-            'user_id': user_id,
-            'amount': amount_requested
-        }
-        purchase_collection.insert_one(purchase_data)
-
         # Retrieve the buyer's coordinates from the user_data
         buyer_coordinates = user_data['geo_coordinates']
 
         # Retrieve all sellers' data from the database
         all_sellers = collection.find()
 
-        # Create a list to store the sellers' data along with their distances from the buyer
-        sellers_with_distance = []
+        # Create a list to store the selected sellers' data
+        selected_sellers_list = []
+        total_energy_taken = 0
 
         # Calculate the distance of each seller from the buyer using the calculate_distance function
         for seller in all_sellers:
@@ -243,44 +250,69 @@ def purchase():
                 continue
 
             distance = calculate_distance(buyer_coordinates, seller_coordinates)
-            sellers_with_distance.append((seller_id, seller_coordinates, distance, energy_balance, seller['username']))
 
-        # Sort sellers by distance in ascending order
-        sellers_with_distance.sort(key=lambda x: x[2])
-
-        # Initialize variables for tracking selected sellers and total energy taken
-        selected_sellers_list = []
-        total_energy_taken = 0
-
-        # Iterate through sellers with distance and select sellers with enough energy to fulfill the request
-        for seller_id, seller_coordinates, distance, energy_balance, seller_username in sellers_with_distance:
             # Check if the seller has enough energy to fulfill the request
             if energy_balance > 0 and total_energy_taken < amount_requested:
                 # Calculate the amount of energy to be taken from this seller
                 energy_taken = min(amount_requested - total_energy_taken, energy_balance)
 
+                # Determine the provider type based on the number of available sellers
+                provider_type = 'SINGLE' if energy_balance >= amount_requested else 'MULTIPLE'
+
                 # Add the selected seller's data to the selected_sellers_list
                 selected_seller_data = {
-                    'seller_id': seller_id,
-                    'energy_taken': energy_taken,
-                    'buyer_id': user_id,
-                    'buyer_username': username,  # Add the buyer's username
-                    'seller_username': seller_username,  # Add the seller's username
-                    'seller_coordinates': seller_coordinates,
-                    'distance': distance
+                    'user_id': seller_id,
+                    'username': seller['username'],
+                    'status': 'PENDING',
+                    'urutan/ranking': None,
+                    'amount': amount_requested,  # Store the requested amount, not energy_taken
+                    'energy_taken': energy_taken,  # Store the actual energy taken
+                    'provider_type': provider_type  # Store the provider type
                 }
                 selected_sellers_list.append(selected_seller_data)
 
                 # Update total energy taken
                 total_energy_taken += energy_taken
 
-        # Save selected sellers' data to the "Hasil Pemilihan Peer" database
-        hasil_pemilihan_peer_collection.insert_many(selected_sellers_list)
+        # Create the peer selection document
+        peer_selection_document = {
+            'amount': amount_requested,
+            'buyer_id': user_id,
+            'buyer_username': username,
+            'provider_type': provider_type,
+            'candidate': selected_sellers_list
+        }
+
+        # Save the peer selection document to the "peer_selection" collection
+        
+        peer_selection_collection.insert_one(peer_selection_document)
 
         flash('Your order is being processed', 'success')
         return redirect(url_for('dashboard'))
 
     return render_template('purchase.html')
+
+
+@app.route('/notifications_seller')
+@is_logged_in
+def notifications_seller():
+    # Dapatkan ID pengguna dari sesi
+    user_id = collection.find_one({'username': session['username']})['_id']
+    
+    # Dapatkan notifikasi yang sesuai dengan kriteria
+    selected_sellers = peer_selection_collection.find({
+        'buyer_id': user_id,
+        'status': 'PENDING'
+    })
+
+    # Render template HTML dengan notifikasi yang ditemukan
+    return render_template('notifications_seller.html', selected_sellers=selected_sellers)
+
+
+
+
+
+
 
 
 
