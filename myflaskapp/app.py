@@ -14,7 +14,7 @@ from geopy.distance import geodesic
 from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, validators
 from flask_wtf.csrf import CSRFProtect, CSRFError,generate_csrf, validate_csrf
-
+from operator import itemgetter
 
 
 #pass email Pc_123456
@@ -27,6 +27,7 @@ db = client['mydatabase']
 collection = db['users']
 purchase_collection = db['energy_purchase']
 peer_selection_collection = db['peer_selection']
+seller_notifications = db['seller_notifications']  # Koleksi untuk menyimpan notifikasi penjual
 
 # Koneksi ke Ganache
 w3 = Web3(Web3.HTTPProvider('http://localhost:7545'))
@@ -235,9 +236,9 @@ def purchase():
         # Retrieve all sellers' data from the database
         all_sellers = collection.find()
 
-        # Create a list to store the selected sellers' data
-        selected_sellers_list = []
-        total_energy_taken = 0
+        # Create lists to store single and multiple sellers' data
+        single_sellers_list = []
+        multiple_sellers_list = []
 
         # Calculate the distance of each seller from the buyer using the calculate_distance function
         for seller in all_sellers:
@@ -249,43 +250,67 @@ def purchase():
             if seller_id == user_id:
                 continue
 
-            distance = calculate_distance(buyer_coordinates, seller_coordinates)
-
             # Check if the seller has enough energy to fulfill the request
-            if energy_balance > 0 and total_energy_taken < amount_requested:
-                # Calculate the amount of energy to be taken from this seller
-                energy_taken = min(amount_requested - total_energy_taken, energy_balance)
+            if energy_balance >= amount_requested:
+                distance = calculate_distance(buyer_coordinates, seller_coordinates)
 
-                # Determine the provider type based on the number of available sellers
-                provider_type = 'SINGLE' if energy_balance >= amount_requested else 'MULTIPLE'
-
-                # Add the selected seller's data to the selected_sellers_list
-                selected_seller_data = {
+                # Add the seller's data to the single_sellers_list
+                seller_data = {
                     'user_id': seller_id,
                     'username': seller['username'],
                     'status': 'PENDING',
                     'urutan/ranking': None,
-                    'amount': amount_requested,  # Store the requested amount, not energy_taken
-                    'energy_taken': energy_taken,  # Store the actual energy taken
-                    'provider_type': provider_type  # Store the provider type
+                    'amount': amount_requested,  # Store the requested amount
+                    'energy_taken': amount_requested,  # Store the actual energy taken (requested amount)
+                    'provider_type': 'SINGLE',  # Store the provider type as SINGLE
+                    'distance': distance  # Store the distance from the buyer
                 }
-                selected_sellers_list.append(selected_seller_data)
+                single_sellers_list.append(seller_data)
+            else:
+                # Add the seller's data to the multiple_sellers_list
+                seller_data = {
+                    'user_id': seller_id,
+                    'username': seller['username'],
+                    'status': 'PENDING',
+                    'urutan/ranking': None,
+                    'amount': amount_requested,  # Store the requested amount
+                    'energy_taken': energy_balance,  # Store the actual energy taken (available energy)
+                    'provider_type': 'MULTIPLE',  # Store the provider type as MULTIPLE
+                    'distance': None  # Distance is not applicable for MULTIPLE providers
+                }
+                multiple_sellers_list.append(seller_data)
 
-                # Update total energy taken
-                total_energy_taken += energy_taken
+        # If there are single sellers, sort the single_sellers_list based on distance
+        if single_sellers_list:
+            single_sellers_list.sort(key=itemgetter('distance'))
+
+        # Combine single and multiple sellers' lists
+        selected_sellers_list = single_sellers_list + multiple_sellers_list
 
         # Create the peer selection document
         peer_selection_document = {
             'amount': amount_requested,
             'buyer_id': user_id,
             'buyer_username': username,
-            'provider_type': provider_type,
-            'candidate': selected_sellers_list
+            'provider_type': 'SINGLE' if single_sellers_list else 'MULTIPLE',  # Determine provider type
+            'candidate': selected_sellers_list  # Store the combined list of sellers
         }
 
         # Save the peer selection document to the "peer_selection" collection
-        
         peer_selection_collection.insert_one(peer_selection_document)
+
+        # Create notifications for selected sellers and save them to the "seller_notifications" collection
+        for seller in selected_sellers_list:
+            # Create a notification document
+            notification_data = {
+                'buyer_name': username,
+                'energy_taken': seller['energy_taken'],
+                'status': 'PENDING',
+                'seller_id': seller['user_id']  # Include the seller's ID for reference
+            }
+
+            # Save the notification document to the "seller_notifications" collection
+            seller_notifications.insert_one(notification_data)
 
         flash('Your order is being processed', 'success')
         return redirect(url_for('dashboard'))
@@ -293,26 +318,62 @@ def purchase():
     return render_template('purchase.html')
 
 
-@app.route('/notifications_seller')
+
+
+@app.route('/notifications_seller', methods=['GET', 'POST'])
 @is_logged_in
 def notifications_seller():
     # Dapatkan ID pengguna dari sesi
     user_id = collection.find_one({'username': session['username']})['_id']
-    
+
+    if request.method == 'POST':
+        # Handle the "Approve" action
+        if 'approve' in request.form:
+            # Proses aksi "Approve" di sini
+            # Misalnya, Anda dapat mengubah status notifikasi menjadi "APPROVED"
+            # dan melakukan tindakan lain yang sesuai
+            notification_id = request.form['approve']  # ID notifikasi yang di-approve
+            peer_selection_collection.update_one(
+                {'_id': ObjectId(notification_id)},
+                {'$set': {'status': 'APPROVED'}}
+            )
+            flash('Notification approved successfully', 'success')
+
+        # Handle the "Decline" action
+        elif 'decline' in request.form:
+            # Proses aksi "Decline" di sini
+            # Misalnya, Anda dapat mengubah status notifikasi menjadi "DECLINED"
+            # dan melakukan tindakan lain yang sesuai
+            notification_id = request.form['decline']  # ID notifikasi yang di-decline
+            peer_selection_collection.update_one(
+                {'_id': ObjectId(notification_id)},
+                {'$set': {'status': 'DECLINED'}}
+            )
+            flash('Notification declined successfully', 'success')
+
+        return redirect(url_for('notifications_seller'))
+
     # Dapatkan notifikasi yang sesuai dengan kriteria
     selected_sellers = peer_selection_collection.find({
         'buyer_id': user_id,
         'status': 'PENDING'
     })
 
-    # Render template HTML dengan notifikasi yang ditemukan
-    return render_template('notifications_seller.html', selected_sellers=selected_sellers)
+    # Filter notifikasi berdasarkan tipe penyedia energi
+    single_notifications = []
+    multiple_notifications = []
 
+    for notification in selected_sellers:
+        if notification['provider_type'] == 'SINGLE':
+            if len(single_notifications) == 0:
+                single_notifications.append(notification)
+        elif notification['provider_type'] == 'MULTIPLE':
+            multiple_notifications.append(notification)
 
-
-
-
-
+    # Render template HTML dengan notifikasi yang sesuai
+    return render_template('notifications_seller.html',
+                           single_notifications=single_notifications,
+                           multiple_notifications=multiple_notifications)
 
 
 
