@@ -8,5 +8,6 @@
             <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount of energy (kWh)">
         </div>
         <button type="submit" class="btn btn-primary">Buy</button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     </form>
 {% endblock %}

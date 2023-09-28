@@ -25,6 +25,7 @@
               <button type="submit" class="btn btn-danger" name="decline">Decline</button>
               <input type="hidden" name="purchase_id" value="{{ notification.purchase_id }}">
               <input type="hidden" name="notification_id" value="{{ notification._id }}">
+              <input type="hidden" name="seller_id" value="{{ notification.seller_id }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </form>
           </td>

@@ -1,3 +1,4 @@
+from bson import ObjectId
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 from pymongo import MongoClient
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
@@ -336,7 +337,7 @@ def notifications_seller():
     return render_template('notifications_seller.html',
                            notifications=notifications)  # Changed variable name
 
-@app.route('/purchase-requests', methods=['PUT'])
+@app.route('/purchase-requests', methods=['POST'])
 @is_logged_in
 def decline_request():
     notification_id = request.form['notification_id']  # ID notifikasi yang di-approve

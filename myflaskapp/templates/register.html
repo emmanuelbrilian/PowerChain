@@ -29,5 +29,6 @@
             <input type="text" class="form-control" id="coordinates" name="coordinates" placeholder="Enter your coordinates">
         </div>
         <button type="submit" class="btn btn-primary">Register</button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     </form>
 {% endblock %}
