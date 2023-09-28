@@ -1,22 +1,15 @@
+import random
 from bson import ObjectId
-from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
+from flask import Flask, render_template, flash, redirect, url_for, session, request, logging
+from flask_wtf.csrf import CSRFProtect
 from pymongo import MongoClient
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-import json
+from web3 import Web3
 from web3.auto import w3
-from web3 import Web3, HTTPProvider
-from web3.middleware import geth_poa_middleware
 from geopy.geocoders import Nominatim
-import random
-from math import radians, sin, cos, sqrt, atan2
 from geopy.distance import geodesic
-from flask_wtf.csrf import CSRFProtect
-from wtforms import StringField, validators
-from flask_wtf.csrf import CSRFProtect, CSRFError,generate_csrf, validate_csrf
-from operator import itemgetter
-
+from wtforms import Form, StringField, PasswordField, validators, StringField, validators
 
 #pass email Pc_123456
 app = Flask(__name__)
@@ -25,10 +18,9 @@ CSRFProtect(app)
 # Koneksi ke MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['mydatabase']
-collection = db['users']
-purchase_collection = db['energy_purchase']
-peer_selection_collection = db['peer_selection']
-seller_notifications = db['seller_notifications']  # Koleksi untuk menyimpan notifikasi penjual
+user_collection = db['users']
+seller_notifications_collection = db['seller_notifications']  # Koleksi untuk menyimpan notifikasi penjual
+purchase_order_collection = db['peer_selection']
 
 # Koneksi ke Ganache
 w3 = Web3(Web3.HTTPProvider('http://localhost:7545'))
@@ -73,7 +65,7 @@ def register():
         geo_address = location.address if location else ""
 
         # Check if the email is already registered
-        if collection.find_one({'email': email}):
+        if user_collection.find_one({'email': email}):
             flash('Email already registered. Please use a different email.', 'danger')
             return render_template('register.html', form=form)
 
@@ -94,12 +86,12 @@ def register():
             'energy_sold': energy_sold,  # Set energy_sold to 0 upon registration
             'energy_purchased': energy_purchased,  # Set energy_purchased to 0 upon registration
         }
-        collection.insert_one(user_data)
+        user_collection.insert_one(user_data)
 
         # Menghubungkan dengan akun Ganache
         accounts = w3.eth.accounts
         bcaddress = accounts[0]
-        collection.update_one(
+        user_collection.update_one(
             {'username': username},
             {'$set': {'bcaddress': bcaddress}}  # Saving the Ganache address (bcaddress)
         )
@@ -119,7 +111,7 @@ def login():
         password_candidate = request.form['password']
 
         # Mencari pengguna berdasarkan username
-        user = collection.find_one({'username': username})
+        user = user_collection.find_one({'username': username})
 
         if user:
             # Mendapatkan password yang disimpan
@@ -181,7 +173,7 @@ def dashboard():
     ethereum_used = w3.from_wei(ethereum_used_wei, 'ether')
 
     # Get the energy balance from the database for the logged-in user
-    user_data = collection.find_one({'username': session['username']})
+    user_data = user_collection.find_one({'username': session['username']})
     current_energy = user_data['current_energy']
     energy_sold = user_data['energy_sold']
     energy_purchased = user_data['energy_purchased']
@@ -204,7 +196,7 @@ def dashboard():
 @is_logged_in
 def peers():
     # Mengambil informasi pengguna dari basis data
-    users = collection.find()
+    users = user_collection.find()
 
     return render_template('peers.html', users=users)
 
@@ -218,124 +210,144 @@ def calculate_distance(coord1, coord2):
     distance_km = geodesic((lat1, lon1), (lat2, lon2)).kilometers
     return distance_km
 
+def get_candidates(user_id, buyer_coordinates, amount_requested):
+    # get all peers that has energy & not the current active user
+    peers = user_collection.find({ 'energy_balance': { '$gt': 0 }, '_id': { '$ne': ObjectId(user_id) } })
+    candidates = []
 
-@app.route('/purchase', methods=['GET', 'POST'])
+    for seller in peers:
+        energy_balance = int(seller['current_energy'])  # Convert energy_balance to integer
+        seller_id = seller['_id']
+        seller_username = seller['username']
+        seller_coordinates = seller['geo_coordinates']
+        distance = calculate_distance(buyer_coordinates, seller_coordinates)
+
+        candidates.append({
+            'user_id': seller_id,
+            'username': seller_username,
+            'distance': distance,
+            'availabel_energy': energy_balance,
+            'energy_taken': 0
+        })
+
+    return candidates
+
+# get candidates for MULTIPLE provide type
+def get_selected_candidates(candidates, amount_requested):
+    selected_candidates = []
+    total_energy_taken = 0
+    for candidate in candidates:
+        if (total_energy_taken >= amount_requested):
+            break
+
+        energy_needs = amount_requested - total_energy_taken
+        energy_balance = candidate['available_energy']
+        energy_taken = min(energy_needs, energy_balance)
+
+        candidate['energy_taken'] = energy_taken
+        total_energy_taken += energy_taken
+
+    return selected_candidates
+
+def update_candidate_energy_taken_and_status(candidate, purchase_order):
+    purchase_order_collection.update_one(
+        { '_id': ObjectId(purchase_order['_id']), 'candidate.user_id': candidate['user_id'] },
+        { '$set': {
+                'candidate.$.status': 'PENDING',
+                'candidate.$.energy_taken': candidate['energy_taken']
+            }
+        }
+    )
+
+
+def create_notification(purchase_order, candidate, energy_taken):
+    notification = {
+        'purchase_id': purchase_order['_id'],
+        'buyer_username': purchase_order['buyer_username'],
+        'seller_id': candidate['user_id'],
+        'seller_username': candidate['username'],
+        'energy_taken': energy_taken,
+        'status': 'PENDING'
+    }
+    seller_notifications_collection.insert_many(notification)
+
+@app.route('/purchase', methods=['POST'])
 @is_logged_in
 def purchase():
-    if request.method == 'POST':
-        # Get user data from the database
-        user_data = collection.find_one({'username': session['username']})
-        user_id = user_data['_id']  # Get the user ID from the database
-        username = user_data['username']  # Get the username from the database
+    # Get user data from the database
+    user_data = user_collection.find_one({'username': session['username']})
+    user_id = user_data['_id']  # Get the user ID from the database
+    username = user_data['username']  # Get the username from the database
+    amount_requested = int(request.form['amount'])
 
-        # Get amount from the form and convert it to integer
-        amount_requested = int(request.form['amount'])
+    purchase_order = {
+        'amount': amount_requested,
+        'buyer_id': user_id,
+        'buyer_username': username,
+        'amount_requested': amount_requested
+    }
+    created_purchase_order = purchase_order_collection.insert_one(purchase_order)
+    purchase_order = purchase_order_collection.find_one(created_purchase_order.inserted_id)
 
-        # Retrieve the buyer's coordinates from the user_data
-        buyer_coordinates = user_data['geo_coordinates']
+    buyer_coordinates = user_data['geo_coordinates']
+    candidates = get_candidates(user_id, buyer_coordinates, amount_requested)
 
-        # Retrieve all sellers' data from the database
-        all_sellers = collection.find()
+    # calculate total available energy from all candidates
+    available_energies = map(lambda c: c['availabel_energy'], candidates)
+    total_available_energy = sum(available_energies)
+    if (total_available_energy < amount_requested):
+        flash('Requested amount cannot be fulfiled', 'danger')
+        return
 
-        # Create a list to store the selected sellers' data
-        selected_sellers_list = []
-        total_energy_taken = 0
+    # sort candidates by distance
+    candidates.sort(key = lambda c: c['distance'])
 
-        # Calculate the distance of each seller from the buyer using the calculate_distance function
-        for seller in all_sellers:
-            seller_id = seller['_id']
-            seller_coordinates = seller['geo_coordinates']
-            energy_balance = int(seller['current_energy'])  # Convert energy_balance to integer
-
-            # Skip the buyer (peer) from being considered as a seller
-            if seller_id == user_id:
-                continue
-
-            distance = calculate_distance(buyer_coordinates, seller_coordinates)
-
-            # Check if the seller has enough energy to fulfill the request
-            if energy_balance > 0 and total_energy_taken < amount_requested:
-                # Calculate the amount of energy to be taken from this seller
-                energy_taken = min(amount_requested - total_energy_taken, energy_balance)
-
-                # Determine the provider type based on the number of available sellers
-                provider_type = 'SINGLE' if energy_balance >= amount_requested else 'MULTIPLE'
-
-                # Add the selected seller's data to the selected_sellers_list
-                selected_seller_data = {
-                    'user_id': seller_id,
-                    'username': seller['username'],
-                    'status': 'PENDING',
-                    'urutan/ranking': None,
-                    'amount': amount_requested,  # Store the requested amount, not energy_taken
-                    'energy_taken': energy_taken,  # Store the actual energy taken
-                    'provider_type': provider_type,  # Store the provider type
-                    'distance': distance  # Store the distance from the buyer
-                }
-                selected_sellers_list.append(selected_seller_data)
-
-                # Update total energy taken
-                total_energy_taken += energy_taken
-
-        # Check if there are selected sellers and if their total energy is enough
-        if selected_sellers_list and total_energy_taken >= amount_requested:
-            
-            # Create the peer selection document
-            peer_selection_document = {
-                'amount': amount_requested,
-                'buyer_id': user_id,
-                'buyer_username': username,
-                'provider_type': provider_type,
-                'candidate': selected_sellers_list,
+    # SINGLE if the nearest candidate can fulfill all requested amount
+    provider_type = 'SINGLE' if candidates[0]['available_energy'] >= amount_requested else 'MULTIPLE'
+    purchase_order_collection.update_one(
+        { '_id': ObjectId(created_purchase_order.inserted_id) },
+        { '$set': {
+                'candidate': candidates ,
+                'provider_type': provider_type
             }
+        }
+    )
 
-            # Save the peer selection document to the "peer_selection" collection
-            peer_selection_collection = db['peer_selection']
-            insert_result = peer_selection_collection.insert_one(peer_selection_document)
+    if (provider_type == 'SINGLE'):
+        candidates[0]['energy_taken'] = amount_requested
+        update_candidate_energy_taken_and_status(candidates[0])
+        create_notification(candidates[0])
+    else:
+        selected_candidates = get_selected_candidates(candidates, amount_requested)
+        for sc in selected_candidates:
+            update_candidate_energy_taken_and_status(sc)
+            create_notification(sc)
 
-            # Create notifications for selected sellers
-            notifications_data = []
-            for seller in selected_sellers_list:
-                notification_data = {
-                    'buyer_username': username,
-                    'seller_username': seller['username'],
-                    'energy_taken': seller['energy_taken'],
-                    'status': 'PENDING',
-                    'seller_id': seller['user_id'],
-                    'purchase_id': insert_result.inserted_id
-                }
-                notifications_data.append(notification_data)
+    flash('Your order is being processed', 'success')
 
-            # Save notifications to the "seller_notifications" collection
-            seller_notifications = db['seller_notifications']
-            seller_notifications.insert_many(notifications_data)
+    # Redirect to the dashboard page
+    return redirect(url_for('dashboard'))
 
-            flash('Your order is being processed', 'success')
-        else:
-            flash('No sellers meet the criteria for your request', 'danger')
 
-        # Redirect to the dashboard page
-        return redirect(url_for('dashboard'))
-
+@app.route('/purchase', methods=['GET'])
+@is_logged_in
+def open_purchase_page():
     return render_template('purchase.html')
-
-
 
 @app.route('/notifications_seller', methods=['GET'])
 @is_logged_in
 def notifications_seller():
     # Dapatkan ID pengguna dari sesi
-    user_id = collection.find_one({'username': session['username']})['_id']
+    user_id = user_collection.find_one({'username': session['username']})['_id']
 
     # Dapatkan notifikasi yang sesuai dengan kriteria
-    notifications = seller_notifications.find({
+    notifications = seller_notifications_collection.find({
         'seller_id': user_id,
         'status': 'PENDING'
     })
 
     # Render template HTML dengan notifikasi yang sesuai
-    return render_template('notifications_seller.html',
-                           notifications=notifications)  # Changed variable name
+    return render_template('notifications_seller.html', notifications = notifications)
 
 @app.route('/purchase-requests', methods=['POST'])
 @is_logged_in
@@ -348,37 +360,39 @@ def decline_request():
         # Proses aksi "Approve" di sini
         # Misalnya, Anda dapat mengubah status notifikasi menjadi "APPROVED"
         # dan melakukan tindakan lain yang sesuai
-        seller_notifications.update_one(
+        seller_notifications_collection.update_one(
             {'_id': ObjectId(notification_id)},
             {'$set': {'status': 'APPROVED'}}
         )
 
-        peer_selection_collection.update_one(
+        purchase_order_collection.update_one(
             {'_id': ObjectId(purchase_id), 'candidate.user_id': seller_id},
             {'$set': {'candidate.$.status': 'APPROVED'}}
         )
 
+        flash('Notification approved successfully', 'success')
+
         # TODO do energy transfer
         # TODO do transaction to ether
-        # flash('Notification approved successfully', 'success')
 
     # Handle the "Decline" action
     elif 'decline' in request.form:
         # Proses aksi "Decline" di sini
         # Misalnya, Anda dapat mengubah status notifikasi menjadi "DECLINED"
         # dan melakukan tindakan lain yang sesuai
-        seller_notifications.update_one(
+        seller_notifications_collection.update_one(
             {'_id': ObjectId(notification_id)},
             {'$set': {'status': 'DECLINED'}}
         )
 
-        peer_selection_collection.update_one(
+        purchase_order_collection.update_one(
             {'_id': ObjectId(purchase_id), 'candidate.user_id': seller_id},
             {'$set': {'candidate.$.status': 'DECLINED'}}
         )
 
+        flash('Notification declined successfully', 'success')
+
         # TODO re-calculate candidates
-        # flash('Notification declined successfully', 'success')
 
     return redirect (url_for('notifications_seller'))
 
