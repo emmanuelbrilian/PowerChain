@@ -236,9 +236,9 @@ def purchase():
         # Retrieve all sellers' data from the database
         all_sellers = collection.find()
 
-        # Create lists to store single and multiple sellers' data
-        single_sellers_list = []
-        multiple_sellers_list = []
+        # Create a list to store the selected sellers' data
+        selected_sellers_list = []
+        total_energy_taken = 0
 
         # Calculate the distance of each seller from the buyer using the calculate_distance function
         for seller in all_sellers:
@@ -250,73 +250,72 @@ def purchase():
             if seller_id == user_id:
                 continue
 
-            # Check if the seller has enough energy to fulfill the request
-            if energy_balance >= amount_requested:
-                distance = calculate_distance(buyer_coordinates, seller_coordinates)
+            distance = calculate_distance(buyer_coordinates, seller_coordinates)
 
-                # Add the seller's data to the single_sellers_list
-                seller_data = {
+            # Check if the seller has enough energy to fulfill the request
+            if energy_balance > 0 and total_energy_taken < amount_requested:
+                # Calculate the amount of energy to be taken from this seller
+                energy_taken = min(amount_requested - total_energy_taken, energy_balance)
+
+                # Determine the provider type based on the number of available sellers
+                provider_type = 'SINGLE' if energy_balance >= amount_requested else 'MULTIPLE'
+
+                # Add the selected seller's data to the selected_sellers_list
+                selected_seller_data = {
                     'user_id': seller_id,
                     'username': seller['username'],
                     'status': 'PENDING',
                     'urutan/ranking': None,
-                    'amount': amount_requested,  # Store the requested amount
-                    'energy_taken': amount_requested,  # Store the actual energy taken (requested amount)
-                    'provider_type': 'SINGLE',  # Store the provider type as SINGLE
+                    'amount': amount_requested,  # Store the requested amount, not energy_taken
+                    'energy_taken': energy_taken,  # Store the actual energy taken
+                    'provider_type': provider_type,  # Store the provider type
                     'distance': distance  # Store the distance from the buyer
                 }
-                single_sellers_list.append(seller_data)
-            else:
-                # Add the seller's data to the multiple_sellers_list
-                seller_data = {
-                    'user_id': seller_id,
-                    'username': seller['username'],
-                    'status': 'PENDING',
-                    'urutan/ranking': None,
-                    'amount': amount_requested,  # Store the requested amount
-                    'energy_taken': energy_balance,  # Store the actual energy taken (available energy)
-                    'provider_type': 'MULTIPLE',  # Store the provider type as MULTIPLE
-                    'distance': None  # Distance is not applicable for MULTIPLE providers
-                }
-                multiple_sellers_list.append(seller_data)
+                selected_sellers_list.append(selected_seller_data)
 
-        # If there are single sellers, sort the single_sellers_list based on distance
-        if single_sellers_list:
-            single_sellers_list.sort(key=itemgetter('distance'))
+                # Update total energy taken
+                total_energy_taken += energy_taken
 
-        # Combine single and multiple sellers' lists
-        selected_sellers_list = single_sellers_list + multiple_sellers_list
-
-        # Create the peer selection document
-        peer_selection_document = {
-            'amount': amount_requested,
-            'buyer_id': user_id,
-            'buyer_username': username,
-            'provider_type': 'SINGLE' if single_sellers_list else 'MULTIPLE',  # Determine provider type
-            'candidate': selected_sellers_list  # Store the combined list of sellers
-        }
-
-        # Save the peer selection document to the "peer_selection" collection
-        peer_selection_collection.insert_one(peer_selection_document)
-
-        # Create notifications for selected sellers and save them to the "seller_notifications" collection
-        for seller in selected_sellers_list:
-            # Create a notification document
-            notification_data = {
-                'buyer_name': username,
-                'energy_taken': seller['energy_taken'],
-                'status': 'PENDING',
-                'seller_id': seller['user_id']  # Include the seller's ID for reference
+        # Check if there are selected sellers and if their total energy is enough
+        if selected_sellers_list and total_energy_taken >= amount_requested:
+            
+            # Create the peer selection document
+            peer_selection_document = {
+                'amount': amount_requested,
+                'buyer_id': user_id,
+                'buyer_username': username,
+                'provider_type': provider_type,
+                'candidate': selected_sellers_list,
             }
 
-            # Save the notification document to the "seller_notifications" collection
-            seller_notifications.insert_one(notification_data)
+            # Save the peer selection document to the "peer_selection" collection
+            peer_selection_collection = db['peer_selection']
+            peer_selection_collection.insert_one(peer_selection_document)
 
-        flash('Your order is being processed', 'success')
+            # Create notifications for selected sellers
+            notifications_data = []
+            for seller in selected_sellers_list:
+                notification_data = {
+                    'buyer_username': username,
+                    'seller_username': seller['username'],
+                    'energy_taken': seller['energy_taken'],
+                    'status': 'PENDING',
+                    'seller_id': seller['user_id']
+                }
+                notifications_data.append(notification_data)
+
+            # Save notifications to the "seller_notifications" collection
+            seller_notifications = db['seller_notifications']
+            seller_notifications.insert_many(notifications_data)
+
+            flash('Your order is being processed', 'success')
+        else:
+            flash('No sellers meet the criteria for your request', 'danger')
+
+        # Redirect to the dashboard page
         return redirect(url_for('dashboard'))
 
     return render_template('purchase.html')
-
 
 
 
@@ -351,11 +350,9 @@ def notifications_seller():
             )
             flash('Notification declined successfully', 'success')
 
-        return redirect(url_for('notifications_seller'))
-
     # Dapatkan notifikasi yang sesuai dengan kriteria
-    selected_sellers = peer_selection_collection.find({
-        'buyer_id': user_id,
+    selected_sellers = seller_notifications.find({
+        'seller_id': user_id,
         'status': 'PENDING'
     })
 
@@ -372,8 +369,11 @@ def notifications_seller():
 
     # Render template HTML dengan notifikasi yang sesuai
     return render_template('notifications_seller.html',
+                           selected_sellers=selected_sellers,  # Changed variable name
                            single_notifications=single_notifications,
                            multiple_notifications=multiple_notifications)
+
+
 
 
 
