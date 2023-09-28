@@ -356,22 +356,9 @@ def notifications_seller():
         'status': 'PENDING'
     })
 
-    # Filter notifikasi berdasarkan tipe penyedia energi
-    single_notifications = []
-    multiple_notifications = []
-
-    for notification in selected_sellers:
-        if notification['provider_type'] == 'SINGLE':
-            if len(single_notifications) == 0:
-                single_notifications.append(notification)
-        elif notification['provider_type'] == 'MULTIPLE':
-            multiple_notifications.append(notification)
-
     # Render template HTML dengan notifikasi yang sesuai
     return render_template('notifications_seller.html',
-                           selected_sellers=selected_sellers,  # Changed variable name
-                           single_notifications=single_notifications,
-                           multiple_notifications=multiple_notifications)
+                           selected_sellers=selected_sellers)  # Changed variable name
 
 
 

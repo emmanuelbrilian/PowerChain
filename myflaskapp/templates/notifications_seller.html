@@ -16,20 +16,13 @@
     <tbody>
       {% for seller in selected_sellers %}
         <tr>
-          <td>{{ seller.buyer_name }}</td>
+          <td>{{ seller.buyer_username }}</td>
           <td>{{ seller.energy_taken }}</td>
           <td>{{ seller.status }}</td>
           <td>
             <form method="POST">
-              {% if seller.provider_type == 'SINGLE' %}
-                {% if loop.index == 1 %}
-                  <button type="submit" class="btn btn-success" name="approve" value="{{ seller._id }}">Approve</button>
-                  <button type="submit" class="btn btn-danger" name="decline" value="{{ seller._id }}">Decline</button>
-                {% endif %}
-              {% else %}
-                <button type="submit" class="btn btn-success" name="approve" value="{{ seller._id }}">Approve</button>
-                <button type="submit" class="btn btn-danger" name="decline" value="{{ seller._id }}">Decline</button>
-              {% endif %}
+              <button type="submit" class="btn btn-success" name="approve" value="{{ seller._id }}">Approve</button>
+              <button type="submit" class="btn btn-danger" name="decline" value="{{ seller._id }}">Decline</button>
               {{ csrf_token() }}
             </form>
           </td>
