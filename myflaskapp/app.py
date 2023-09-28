@@ -19,7 +19,7 @@ from operator import itemgetter
 
 #pass email Pc_123456
 app = Flask(__name__)
-
+CSRFProtect(app)
 
 # Koneksi ke MongoDB
 client = MongoClient('mongodb://localhost:27017/')
