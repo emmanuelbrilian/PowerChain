@@ -290,7 +290,7 @@ def purchase():
 
             # Save the peer selection document to the "peer_selection" collection
             peer_selection_collection = db['peer_selection']
-            peer_selection_collection.insert_one(peer_selection_document)
+            insert_result = peer_selection_collection.insert_one(peer_selection_document)
 
             # Create notifications for selected sellers
             notifications_data = []
@@ -300,7 +300,8 @@ def purchase():
                     'seller_username': seller['username'],
                     'energy_taken': seller['energy_taken'],
                     'status': 'PENDING',
-                    'seller_id': seller['user_id']
+                    'seller_id': seller['user_id'],
+                    'purchase_id': insert_result.inserted_id
                 }
                 notifications_data.append(notification_data)
 
@@ -319,47 +320,66 @@ def purchase():
 
 
 
-@app.route('/notifications_seller', methods=['GET', 'POST'])
+@app.route('/notifications_seller', methods=['GET'])
 @is_logged_in
 def notifications_seller():
     # Dapatkan ID pengguna dari sesi
     user_id = collection.find_one({'username': session['username']})['_id']
 
-    if request.method == 'POST':
-        # Handle the "Approve" action
-        if 'approve' in request.form:
-            # Proses aksi "Approve" di sini
-            # Misalnya, Anda dapat mengubah status notifikasi menjadi "APPROVED"
-            # dan melakukan tindakan lain yang sesuai
-            notification_id = request.form['approve']  # ID notifikasi yang di-approve
-            peer_selection_collection.update_one(
-                {'_id': ObjectId(notification_id)},
-                {'$set': {'status': 'APPROVED'}}
-            )
-            flash('Notification approved successfully', 'success')
-
-        # Handle the "Decline" action
-        elif 'decline' in request.form:
-            # Proses aksi "Decline" di sini
-            # Misalnya, Anda dapat mengubah status notifikasi menjadi "DECLINED"
-            # dan melakukan tindakan lain yang sesuai
-            notification_id = request.form['decline']  # ID notifikasi yang di-decline
-            peer_selection_collection.update_one(
-                {'_id': ObjectId(notification_id)},
-                {'$set': {'status': 'DECLINED'}}
-            )
-            flash('Notification declined successfully', 'success')
-
     # Dapatkan notifikasi yang sesuai dengan kriteria
-    selected_sellers = seller_notifications.find({
+    notifications = seller_notifications.find({
         'seller_id': user_id,
         'status': 'PENDING'
     })
 
     # Render template HTML dengan notifikasi yang sesuai
     return render_template('notifications_seller.html',
-                           selected_sellers=selected_sellers)  # Changed variable name
+                           notifications=notifications)  # Changed variable name
 
+@app.route('/purchase-requests', methods=['PUT'])
+@is_logged_in
+def decline_request():
+    notification_id = request.form['notification_id']  # ID notifikasi yang di-approve
+    purchase_id = request.form['purchase_id']
+    seller_id = request.form['seller_id']
+
+    if 'approve' in request.form:
+        # Proses aksi "Approve" di sini
+        # Misalnya, Anda dapat mengubah status notifikasi menjadi "APPROVED"
+        # dan melakukan tindakan lain yang sesuai
+        seller_notifications.update_one(
+            {'_id': ObjectId(notification_id)},
+            {'$set': {'status': 'APPROVED'}}
+        )
+
+        peer_selection_collection.update_one(
+            {'_id': ObjectId(purchase_id), 'candidate.user_id': seller_id},
+            {'$set': {'candidate.$.status': 'APPROVED'}}
+        )
+
+        # TODO do energy transfer
+        # TODO do transaction to ether
+        # flash('Notification approved successfully', 'success')
+
+    # Handle the "Decline" action
+    elif 'decline' in request.form:
+        # Proses aksi "Decline" di sini
+        # Misalnya, Anda dapat mengubah status notifikasi menjadi "DECLINED"
+        # dan melakukan tindakan lain yang sesuai
+        seller_notifications.update_one(
+            {'_id': ObjectId(notification_id)},
+            {'$set': {'status': 'DECLINED'}}
+        )
+
+        peer_selection_collection.update_one(
+            {'_id': ObjectId(purchase_id), 'candidate.user_id': seller_id},
+            {'$set': {'candidate.$.status': 'DECLINED'}}
+        )
+
+        # TODO re-calculate candidates
+        # flash('Notification declined successfully', 'success')
+
+    return redirect (url_for('notifications_seller'))
 
 
 

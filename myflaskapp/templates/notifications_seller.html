@@ -14,15 +14,17 @@
       </tr>
     </thead>
     <tbody>
-      {% for seller in selected_sellers %}
+      {% for notification in notifications %}
         <tr>
-          <td>{{ seller.buyer_username }}</td>
-          <td>{{ seller.energy_taken }}</td>
-          <td>{{ seller.status }}</td>
+          <td>{{ notification.buyer_username }}</td>
+          <td>{{ notification.energy_taken }}</td>
+          <td>{{ notification.status }}</td>
           <td>
-            <form method="POST">
-              <button type="submit" class="btn btn-success" name="approve" value="{{ seller._id }}">Approve</button>
-              <button type="submit" class="btn btn-danger" name="decline" value="{{ seller._id }}">Decline</button>
+            <form method="POST" action="/purchase-requests">
+              <button type="submit" class="btn btn-success" name="approve">Approve</button>
+              <button type="submit" class="btn btn-danger" name="decline">Decline</button>
+              <input type="hidden" name="purchase_id" value="{{ notification.purchase_id }}">
+              <input type="hidden" name="notification_id" value="{{ notification._id }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </form>
           </td>
