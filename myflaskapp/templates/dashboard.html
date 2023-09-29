@@ -11,7 +11,7 @@
     <div class="info-value-table">
       <table>
         <tr>
-          <td>{{ energy_sold }}</td>
+          <td>{{ user.energy_sold }} KwH</td>
         </tr>
       </table>
     </div>
@@ -21,7 +21,7 @@
     <div class="info-value-table">
       <table>
         <tr>
-          <td>{{ energy_purchased }}</td>
+          <td>{{ user.energy_purchased }} KwH</td>
         </tr>
       </table>
     </div>
@@ -31,7 +31,7 @@
     <div class="info-value-table">
       <table>
         <tr>
-          <td>{{ current_energy }}</td>
+          <td>{{ user.current_energy }} KwH</td>
         </tr>
       </table>
     </div>
@@ -41,7 +41,7 @@
     <div class="info-value-table">
       <table>
         <tr>
-          <td>{{ ethereum_balance }}</td>
+          <td>{{ user.get_ethereum_balance() }} ETH</td>
         </tr>
       </table>
     </div>
@@ -51,7 +51,7 @@
     <div class="info-value-table">
       <table>
         <tr>
-          <td>{{ ethereum_used }}</td>
+          <td>{{ user.get_ethereum_used_balance() }} ETH</td>
         </tr>
       </table>
     </div>
