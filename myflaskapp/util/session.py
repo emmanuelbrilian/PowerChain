@@ -16,9 +16,9 @@ def is_logged_in(f):
 
 def get_active_user():
     json = session["user"]
-    return User.fromJson(json)
+    return User.from_json(json)
 
 def set_active_user(user: User):
     session["logged_in"] = True
     session["username"] = user.username
-    session["user"] = user.toJson()
+    session["user"] = user.to_json()

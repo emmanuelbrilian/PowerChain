@@ -32,7 +32,6 @@ class RegisterForm(Form):
         ],
     )
     confirm = PasswordField("Confirm Password")
-    # Modify the field for coordinates
     coordinates = StringField("Coordinates", [validators.DataRequired()])
 
 
@@ -57,7 +56,7 @@ def register():
     name = form.name.data
     username = form.username.data
     password = sha256_crypt.encrypt(str(form.password.data))
-    user_coordinate = form.coordinates.data
+    user_coordinates = form.coordinates.data
 
     bcaddress = User.get_ethereum_account()
 
@@ -66,7 +65,7 @@ def register():
         password=password,
         email=email,
         name=name,
-        user_coordinate=user_coordinate,
+        user_coordinates=user_coordinates,
         bcaddress=bcaddress,
     )
     user.save()

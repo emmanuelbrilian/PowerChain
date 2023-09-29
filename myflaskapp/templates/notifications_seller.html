@@ -16,7 +16,7 @@
       {% for notification in notifications %}
         <tr>
           <td>{{ notification.buyer_username }}</td>
-          <td>{{ notification.energy_requested }}</td>
+          <td>{{ notification.requested_energy }}</td>
           <td>
             <form method="POST" action="/purchase-requests">
               <button type="submit" class="btn btn-success" name="approve">Approve</button>

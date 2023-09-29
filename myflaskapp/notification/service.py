@@ -1,10 +1,12 @@
-from curses import flash
-from flask import Blueprint, redirect, render_template, request
+import logging
+from flask import Blueprint, flash, redirect, render_template, request
 
 from notification.model import Notification
 from purchase_order.model import PurchaseOrder
+from purchase_order.service import select_candidates_and_send_notification
 from util.session import get_active_user, is_logged_in
 
+__LOG = logging.getLogger("NotificationService")
 
 notification_service = Blueprint(
     "notification", __name__, template_folder="../templates"
@@ -27,13 +29,11 @@ def decline_request():
     seller_id = request.form["seller_id"]
 
     notification = Notification.get_by_id(notification_id)
+    purchase_order = PurchaseOrder.get_by_id(purchase_id)
 
     if "approve" in request.form:
         notification.status = "APPROVED"
         notification.save()
-
-        PurchaseOrder.update_candidate_approve_request(purchase_id, seller_id)
-        flash("Notification approved successfully", "success")
 
         # TODO do energy transfer
         # TODO do transaction to ether
@@ -42,9 +42,18 @@ def decline_request():
         notification.status = "DECLINED"
         notification.save()
 
-        PurchaseOrder.update_candidate_decline_request(purchase_id, seller_id)
-        flash("Notification declined successfully", "success")
+        purchase_order.decline_candidate(seller_id)
+        try:
+            __recalculate_candidates(purchase_order)
+        except Exception as e:
+            __LOG.debug(f"Error: {e}")
+            Notification.abort_purchase_order_notifications(purchase_id)
+            purchase_order.status = "NO SELLER"
 
-        # TODO re-calculate candidates
+        purchase_order.save()
 
+    flash("Response accepted", "success")
     return redirect("/notifications_seller")
+
+def __recalculate_candidates(purchase_order):
+    select_candidates_and_send_notification(purchase_order)

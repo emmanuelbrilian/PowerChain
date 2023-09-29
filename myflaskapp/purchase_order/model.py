@@ -20,7 +20,7 @@ class PurchaseOrder:
         requested_amount,
         buyer_id,
         buyer_username,
-        buyer_coordinate,
+        buyer_coordinates,
         provider_type=None,
         candidates=[],
         status="ON_GOING",
@@ -29,7 +29,7 @@ class PurchaseOrder:
         self.id = id
         self.buyer_id = buyer_id
         self.buyer_username = buyer_username
-        self.buyer_coordinate = buyer_coordinate
+        self.buyer_coordinates = buyer_coordinates
         self.requested_amount = requested_amount
         self.provider_type = provider_type
         self.candidates = candidates
@@ -45,7 +45,7 @@ class PurchaseOrder:
         for seller in peers:
             energy_balance = int(seller.current_energy)
             distance = self.__calculate_distance(
-                self.buyer_coordinate, seller.geo_coordinate
+                self.buyer_coordinates, seller.geo_coordinates
             )
 
             candidates.append(
@@ -70,33 +70,63 @@ class PurchaseOrder:
             "SINGLE" if first_candidate_energy >= self.requested_amount else "MULTIPLE"
         )
 
+    def isSingleProvider(self) -> bool:
+        return self.provider_type == "SINGLE"
+
+    def isMultipleProvider(self) -> bool:
+        return self.provider_type == "MULTIPLE"
+
     def select_single_provider_candidate(self):
-        candidate = self.candidates[0]
-        candidate.energy_requested = self.requested_amount
+        candidate = next(filter(lambda c: c.status == None, self.candidates))
+        candidate.requested_energy = self.requested_amount
         candidate.status = "PENDING"
         return candidate
+
+    def __initialized_candidates_status(self):
+        pending_candidates = filter(
+            lambda c: c.status == "PENDING",
+            self.candidates,
+        )
+        for pc in pending_candidates:
+            pc.status = None
+            pc.requested_energy = 0
 
     def select_multiple_provider_candidates(self):
         selected_candidates = []
         total_energy = 0
-        for candidate in self.candidates:
-            if total_energy >= self.requested_amount:
-                break
+
+        self.__initialized_candidates_status()
+
+        while total_energy < self.requested_amount:
+            candidate = next(
+                filter(
+                    lambda c: c.status == None,
+                    self.candidates,
+                )
+            )
 
             energy_needs = self.requested_amount - total_energy
             energy_balance = candidate.available_energy
-            energy_requested = min(energy_needs, energy_balance)
+            requested_energy = min(energy_needs, energy_balance)
 
-            candidate.energy_requested = energy_requested
+            candidate.requested_energy = requested_energy
             candidate.status = "PENDING"
 
             selected_candidates.append(candidate)
-            total_energy += energy_requested
+            total_energy += requested_energy
 
         return selected_candidates
 
+    def decline_candidate(self, seller_id):
+        candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
+        candidate.decline()
+
+    def approve_candidate(self, seller_id):
+        candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
+        candidate.approve()
+
     def save(self):
-        data = self.__toJson()
+        data = self.__to_json()
         del data["_id"]
 
         if self.id is None:
@@ -108,21 +138,21 @@ class PurchaseOrder:
                 {"$set": data},
             )
 
-    def __toJson(self):
+    def __to_json(self):
         return {
             "_id": self.id,
             "buyer_id": self.buyer_id,
             "buyer_username": self.buyer_username,
-            "buyer_coordinates": self.buyer_coordinate,
+            "buyer_coordinates": self.buyer_coordinates,
             "requested_amount": self.requested_amount,
             "provider_type": self.provider_type,
             "status": self.status,
-            "candidate": Candidate.toJsonArray(self.candidates),
+            "candidates": Candidate.to_json_array(self.candidates),
         }
 
     # class methods
 
-    def fromJson(json):
+    def from_json(json):
         return PurchaseOrder(
             id=str(json["_id"]),
             buyer_id=json["buyer_id"],
@@ -131,73 +161,71 @@ class PurchaseOrder:
             requested_amount=json["requested_amount"],
             provider_type=json["provider_type"],
             status=json["status"],
-            candidates=Candidate.fromJsonArray(json["candidate"]),
+            candidates=Candidate.from_json_array(json["candidates"]),
         )
 
-    def getById(id):
+    def get_by_id(id):
         result = PurchaseOrder.__purchase_order_collection.find_one(
             {"_id": ObjectId(id)}
         )
-        return PurchaseOrder(result)
-
-    def __update_candidate_on_response(purchase_id, seller_id, status):
-        PurchaseOrder.__purchase_order_collection.update_one(
-            {"_id": ObjectId(purchase_id), "candidate.user_id": seller_id},
-            {"$set": {"candidate.$.status": status}},
-        )
-
-    def update_candidate_decline_request(purchase_id, seller_id):
-        PurchaseOrder.__update_candidate_on_response(purchase_id, seller_id, "DECLINED")
-
-    def update_candidate_approve_request(purchase_id, seller_id):
-        PurchaseOrder.__update_candidate_on_response(purchase_id, seller_id, "APPROVED")
+        return PurchaseOrder.from_json(result)
 
 
 class Candidate:
+    __LOG = logging.getLogger("CandidateModel")
+
     def __init__(
         self,
         seller_id,
         seller_username,
         distance,
         available_energy,
-        energy_requested=0,
+        requested_energy=0,
         status=None,
     ) -> None:
         self.seller_id = seller_id
         self.seller_username = seller_username
         self.distance = distance
         self.available_energy = available_energy
-        self.energy_requested = energy_requested
+        self.requested_energy = requested_energy
         self.status = status
 
-    def toJson(self):
+    def decline(self):
+        self.status = "DECLINED"
+
+    def approve(self):
+        self.status = "APPROVED"
+
+    def to_json(self):
         return {
             "seller_id": self.seller_id,
             "seller_username": self.seller_username,
             "distance": self.distance,
-            "availabel_energy": self.available_energy,
-            "energy_requested": self.energy_requested,
+            "available_energy": self.available_energy,
+            "requested_energy": self.requested_energy,
             "status": self.status,
         }
 
-    def __fromJson(json) -> None:
+    # static methods
+
+    def __from_json(json) -> None:
         return Candidate(
             seller_id=json["seller_id"],
             seller_username=json["seller_username"],
             distance=json["distance"],
             available_energy=json["available_energy"],
-            energy_requested=json["energy_requested"],
+            requested_energy=json["requested_energy"],
             status=json["status"],
         )
 
-    def toJsonArray(candidates):
+    def to_json_array(candidates):
         json = []
         for c in candidates:
-            json.append(c.toJson())
+            json.append(c.to_json())
         return json
 
-    def fromJsonArray(json):
+    def from_json_array(json):
         candidates = []
         for j in json:
-            candidates.append(Candidate.__fromJson)
+            candidates.append(Candidate.__from_json(j))
         return candidates
