@@ -1,9 +1,13 @@
+import logging
+
 from flask import Flask, render_template
 from flask_wtf.csrf import CSRFProtect
 
 from purchase_order.service import purchase_order_service
 from user.service import user_service
 from notification.service import notification_service
+
+logging.basicConfig(level=logging.DEBUG)
 
 # pass email Pc_123456
 app = Flask(__name__)
@@ -27,4 +31,4 @@ def about():
 
 if __name__ == "__main__":
     app.secret_key = "secret123"
-    app.run(debug=True)
+    app.run(port=5001, debug=True)

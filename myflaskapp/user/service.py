@@ -1,4 +1,6 @@
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+import logging
+
+from flask import Blueprint, flash, redirect, render_template, request, session
 from wtforms import (
     Form,
     StringField,
@@ -13,6 +15,7 @@ from passlib.hash import sha256_crypt
 from user.model import User
 from util.session import get_active_user, is_logged_in, set_active_user
 
+__LOGGER = logging.getLogger("UserService")
 
 user_service = Blueprint("order", __name__, template_folder="../templates")
 
@@ -58,11 +61,18 @@ def register():
 
     bcaddress = User.get_ethereum_account()
 
-    user = User(username, password, email, name, user_coordinate, bcaddress)
+    user = User(
+        username=username,
+        password=password,
+        email=email,
+        name=name,
+        user_coordinate=user_coordinate,
+        bcaddress=bcaddress,
+    )
     user.save()
 
     flash("You are now registered and can log in", "success")
-    return redirect(url_for("index"))
+    return redirect("/")
 
 
 @user_service.route("/login", methods=["GET"])
@@ -79,9 +89,10 @@ def login():
         user = User.get_login_user(username, password)
         set_active_user(user)
         flash("You are now logged in", "success")
-        return redirect(url_for("dashboard"))
+        return redirect("/dashboard")
     except Exception as e:
         error = "invalid login"
+        __LOGGER.debug(f"Error: {e}")
         return render_template("login.html", error=error)
 
 
@@ -89,12 +100,12 @@ def login():
 def logout():
     session.clear()
     flash("You are now logged out", "success")
-    return redirect(url_for("login"))
+    return redirect("/login")
 
 
 @user_service.route("/peers", methods=["GET"])
 @is_logged_in
-def peers():
+def open_peers_page():
     users = User.get_all()
     return render_template("peers.html", users=users)
 
@@ -103,4 +114,9 @@ def peers():
 @is_logged_in
 def open_dashboard_page():
     user = get_active_user()
-    return render_template("dashboard.html", user=user)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        ethereum_balance=user.get_ethereum_balance(),
+        ethereum_used_balance=user.get_ethereum_used_balance(),
+    )

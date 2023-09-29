@@ -1,9 +1,9 @@
 from curses import flash
-from flask import Blueprint, redirect, render_template, request, url_for
-from myflaskapp.notification.model import Notification
-from myflaskapp.purchase_order.model import PurchaseOrder
+from flask import Blueprint, redirect, render_template, request
 
-from myflaskapp.util.session import get_active_user, is_logged_in
+from notification.model import Notification
+from purchase_order.model import PurchaseOrder
+from util.session import get_active_user, is_logged_in
 
 
 notification_service = Blueprint(
@@ -47,4 +47,4 @@ def decline_request():
 
         # TODO re-calculate candidates
 
-    return redirect(url_for("notifications_seller"))
+    return redirect("/notifications_seller")

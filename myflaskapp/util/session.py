@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import flash, redirect, session, url_for
+from flask import flash, redirect, session
 
 from user.model import User
 
@@ -10,13 +10,13 @@ def is_logged_in(f):
             return f(*args, **kwargs)
         else:
             flash("Unauthorized, please login", "danger")
-            return redirect(url_for("login"))
+            return redirect("/login")
 
     return wrap
 
 def get_active_user():
     json = session["user"]
-    return User.__fromJson(json)
+    return User.fromJson(json)
 
 def set_active_user(user: User):
     session["logged_in"] = True
