@@ -9,7 +9,6 @@
       <tr>
         <th>Buyer Name</th>
         <th>Energy Taken</th>
-        <th>Status</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -17,14 +16,13 @@
       {% for notification in notifications %}
         <tr>
           <td>{{ notification.buyer_username }}</td>
-          <td>{{ notification.energy_taken }}</td>
-          <td>{{ notification.status }}</td>
+          <td>{{ notification.requested_energy }}</td>
           <td>
             <form method="POST" action="/purchase-requests">
               <button type="submit" class="btn btn-success" name="approve">Approve</button>
               <button type="submit" class="btn btn-danger" name="decline">Decline</button>
               <input type="hidden" name="purchase_id" value="{{ notification.purchase_id }}">
-              <input type="hidden" name="notification_id" value="{{ notification._id }}">
+              <input type="hidden" name="notification_id" value="{{ notification.id }}">
               <input type="hidden" name="seller_id" value="{{ notification.seller_id }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </form>

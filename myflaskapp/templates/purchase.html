@@ -2,7 +2,7 @@
 
 {% block body %}
     <h1>Purchase Menu</h1>
-    <form method="POST" action="{{ url_for('purchase') }}">
+    <form method="POST" action="/purchase">
         <div class="form-group">
             <label for="amount">Amount of Energy to be Purchased:</label>
             <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount of energy (kWh)">
