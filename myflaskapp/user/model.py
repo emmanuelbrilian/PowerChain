@@ -154,4 +154,4 @@ class User:
         return User.__from_json_array(results)
 
     def get_ethereum_account():
-        return User.__ethereum_connection.eth.accounts
+        return User.__ethereum_connection.eth.accounts[0]
