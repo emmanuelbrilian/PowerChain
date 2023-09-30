@@ -65,7 +65,7 @@ def register():
         password=password,
         email=email,
         name=name,
-        user_coordinates=user_coordinates,
+        geo_coordinates=user_coordinates,
         bcaddress=bcaddress,
     )
     user.save()

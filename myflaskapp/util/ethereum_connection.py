@@ -1,21 +1,29 @@
 from web3 import Web3
 
-__ethereum_address = "http://localhost:7545"
-ethereum_connection = None
 
-__mock = True
+class EthereumConnection:
+    __ethereum_address = "http://localhost:7545"
 
-def __connect_to_ganache(ganache_address):
-    ethereum_provider = Web3.HTTPProvider(ganache_address)
-    return Web3(ethereum_provider)
+    __ethereum_connection = None
 
-def get_ethereum_connetion():
-    if __mock:
-        return GanacheMock()
-    
-    if ethereum_connection is None:
-        ethereum_connection = __connect_to_ganache(__ethereum_address)
-    return ethereum_connection
+    __mock = False
+
+    def __connect_to_ganache(ganache_address):
+        ethereum_provider = Web3.HTTPProvider(ganache_address)
+        return Web3(ethereum_provider)
+
+    def get_ethereum_connetion():
+        if EthereumConnection.__mock:
+            return GanacheMock()
+
+        if EthereumConnection.__ethereum_connection is None:
+            EthereumConnection.__ethereum_connection = (
+                EthereumConnection.__connect_to_ganache(
+                    EthereumConnection.__ethereum_address
+                )
+            )
+        return EthereumConnection.__ethereum_connection
+
 
 # ganache mock
 class GanacheMock:

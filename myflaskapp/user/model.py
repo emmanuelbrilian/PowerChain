@@ -5,7 +5,7 @@ from bson import ObjectId
 from passlib.hash import sha256_crypt
 from geopy.geocoders import Nominatim
 
-from util.ethereum_connection import get_ethereum_connetion
+from util.ethereum_connection import EthereumConnection
 from util.db_connection import get_database_connection
 
 
@@ -16,7 +16,7 @@ class User:
 
     __user_collection = get_database_connection(__USER_COLLECTION_NAME)
 
-    __ethereum_connection = get_ethereum_connetion()
+    __ethereum_connection = EthereumConnection.get_ethereum_connetion()
 
     def __init__(
         self,
@@ -121,7 +121,7 @@ class User:
         return users
 
     def is_email_registered(email) -> bool:
-        result = User.__user_collection.find({"email": email})
+        result = User.__user_collection.find_one({"email": email})
         return result != None
 
     def get_login_user(username, password):
