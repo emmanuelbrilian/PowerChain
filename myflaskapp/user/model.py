@@ -152,6 +152,13 @@ class User:
             {"current_energy": {"$gt": 0}, "_id": {"$ne": ObjectId(user_id)}}
         )
         return User.__from_json_array(results)
+    
+    def __is_bcaddress_used(ethereum_account):
+        result = User.__user_collection.find_one({"bcaddress": ethereum_account})
+        return result != None
 
     def get_ethereum_account():
-        return User.__ethereum_connection.eth.accounts[0]
+        for ethereum_account in User.__ethereum_connection.eth.accounts:
+            if User.__is_bcaddress_used(ethereum_account):
+                return ethereum_account            
+        return None

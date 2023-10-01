@@ -41,7 +41,7 @@ class GanacheMock:
 
 class ETHMock:
     def __init__(self) -> None:
-        self.accounts = [{"id": "123"}]
+        self.accounts = ["012", "123", "234", "345", "456", "567", "678", "789", "890", "901"]
 
     def get_balance(self, ganache_account):
         return WeiMock("balance")
