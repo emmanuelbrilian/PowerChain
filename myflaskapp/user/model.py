@@ -1,4 +1,3 @@
-import random
 import logging
 
 from bson import ObjectId
@@ -6,15 +5,15 @@ from passlib.hash import sha256_crypt
 from geopy.geocoders import Nominatim
 
 from util.ethereum_connection import EthereumConnection
-from util.db_connection import get_database_connection
+from util.db_connection import MongoConnection
 
 
 class User:
-    __USER_COLLECTION_NAME = "users"
-
     __LOG = logging.getLogger("UserModel")
 
-    __user_collection = get_database_connection(__USER_COLLECTION_NAME)
+    __USER_COLLECTION_NAME = "users"
+
+    __user_collection = MongoConnection.get_collection(__USER_COLLECTION_NAME)
 
     __ethereum_connection = EthereumConnection.get_ethereum_connetion()
 
@@ -26,7 +25,7 @@ class User:
         name,
         geo_coordinates,
         bcaddress,
-        current_energy=random.randint(0, 800),
+        current_energy,
         energy_sold=0,
         energy_purchased=0,
         geo_address=None,
@@ -147,7 +146,6 @@ class User:
         return User.__from_json_array(results)
 
     def get_other_users_with_available_energy(user_id):
-        User.__LOG.debug(f"Finding customer with balance other than {user_id}")
         results = User.__user_collection.find(
             {"current_energy": {"$gt": 0}, "_id": {"$ne": ObjectId(user_id)}}
         )
@@ -159,6 +157,7 @@ class User:
 
     def get_ethereum_account():
         for ethereum_account in User.__ethereum_connection.eth.accounts:
-            if User.__is_bcaddress_used(ethereum_account):
+            User.__LOG.debug(f"Found account: {ethereum_account}")
+            if not User.__is_bcaddress_used(ethereum_account):
                 return ethereum_account            
         return None

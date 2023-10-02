@@ -1,11 +1,17 @@
 from pymongo import MongoClient
 
 
-__mongo_server = "mongodb://localhost:27017/"
+__mongo_server = "mongodb://powerchain:powerchain@localhost:27017/"
 __database_name = "powerchain"
 
-__client = MongoClient(__mongo_server)
-__db = __client[__database_name]
 
-def get_database_connection(collection):
-  return __db[collection]
+def init_mongo():
+    __client = MongoClient(__mongo_server)
+    MongoConnection.db = __client[__database_name]
+
+
+class MongoConnection:
+    db = None
+
+    def get_collection(collection_name):
+        return MongoConnection.db[collection_name]

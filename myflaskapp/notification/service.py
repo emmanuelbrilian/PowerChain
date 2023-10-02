@@ -5,6 +5,7 @@ from notification.model import Notification
 from purchase_order.model import PurchaseOrder
 from purchase_order.service import select_candidates_and_send_notification
 from util.session import get_active_user, is_logged_in
+from energy_transfer.model import EnergyTransfer
 
 __LOG = logging.getLogger("NotificationService")
 
@@ -35,7 +36,14 @@ def decline_request():
         notification.status = "APPROVED"
         notification.save()
 
-        # TODO do energy transfer
+        energy_transfer = EnergyTransfer(
+            sender=notification.seller_id,
+            receiver=purchase_order.buyer_id,
+            transfer_amount=notification.requested_energy,
+            purchase_id=purchase_id,
+        )
+        energy_transfer.send()
+
         # TODO do transaction to ether
 
     elif "decline" in request.form:
@@ -54,6 +62,7 @@ def decline_request():
 
     flash("Response accepted", "success")
     return redirect("/notifications_seller")
+
 
 def __recalculate_candidates(purchase_order):
     select_candidates_and_send_notification(purchase_order)

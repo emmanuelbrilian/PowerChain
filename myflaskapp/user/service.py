@@ -1,4 +1,5 @@
 import logging
+import random
 
 from flask import Blueprint, flash, redirect, render_template, request, session
 from wtforms import (
@@ -67,6 +68,7 @@ def register():
         name=name,
         geo_coordinates=user_coordinates,
         bcaddress=bcaddress,
+        current_energy=random.randint(0, 800)
     )
     user.save()
 

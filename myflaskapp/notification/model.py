@@ -1,11 +1,11 @@
 from bson import ObjectId
-from util.db_connection import get_database_connection
+from util.db_connection import MongoConnection
 
 
 class Notification:
     __notification_collection_name = "notifications"
 
-    __notification_collection = get_database_connection(__notification_collection_name)
+    __notification_collection = MongoConnection.get_collection(__notification_collection_name)
 
     def __init__(
         self,

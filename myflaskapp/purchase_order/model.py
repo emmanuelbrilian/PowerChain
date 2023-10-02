@@ -3,7 +3,7 @@ import logging
 from bson import ObjectId
 from geopy.distance import geodesic
 
-from util.db_connection import get_database_connection
+from util.db_connection import MongoConnection
 
 
 class PurchaseOrder:
@@ -11,7 +11,7 @@ class PurchaseOrder:
 
     __purchase_order_collection_name = "purchase_orders"
 
-    __purchase_order_collection = get_database_connection(
+    __purchase_order_collection = MongoConnection.get_collection(
         __purchase_order_collection_name
     )
 

@@ -4,3 +4,4 @@
 pyvenv.cfg
 .vscode/**
 **/__pycache__/**
+powerchain-docker/.data/**
