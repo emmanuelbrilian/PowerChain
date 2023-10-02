@@ -7,10 +7,6 @@ class EnergyTransfer:
 
     __mqtt_client = connect_mqtt()
 
-    __transfer_topic = "powerchain.transfer_energy"
-
-    __transfer_ack_topic = "powerchain.transfer_energy_ack"
-
     def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
         self.sender = sender
         self.receiver = receiver
@@ -19,6 +15,7 @@ class EnergyTransfer:
 
     def __to_json(self):
         return {
+            "type": "energy_transfer_request",
             "sender": self.sender,
             "receiver": self.receiver,
             "transfer_amount": self.transfer_amount,
@@ -27,15 +24,15 @@ class EnergyTransfer:
 
     def send(self):
         message = str(self.__to_json())
-        result = self.__mqtt_client.publish(self.__transfer_topic, message)
+        result = self.__mqtt_client.publish(self.sender, message)
         status = result[0]
         if status != 0:
             self.__LOG.error(
-                f"Failed publishing to topic {self.__transfer_topic}, status: {status}"
+                f"Failed publishing to topic {self.sender}, status: {status}"
             )
         else:
             self.__LOG.info(
-                f"Message was published into topic '{self.__transfer_topic}'"
+                f"Message was published into topic '{self.sender}'"
             )
 
     def init_receive():
