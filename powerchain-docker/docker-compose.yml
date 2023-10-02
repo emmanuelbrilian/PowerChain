@@ -22,3 +22,9 @@ services:
       - 9001:9001
     volumes:
       - .config/mosquitto:/mosquitto/config
+
+  ganache:
+    image: trufflesuite/ganache-core:latest
+    container_name: powerchain-ganache
+    ports:
+      - 8545:8545
