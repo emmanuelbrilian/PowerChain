@@ -21,19 +21,19 @@ def connect_mqtt():
 
     if MQTTConnection.is_connected:
         __LOG.info("Using current connection")
-        return MQTTConnection.__client
+        return MQTTConnection.client
 
     try:
-        MQTTConnection.__client = mqtt.Client(__client_id)
-        MQTTConnection.__client.on_connect = __on_connect
-        MQTTConnection.__client.on_disconnect = __on_disconnect
-        MQTTConnection.__client.username_pw_set(username="admin", password="powerchain")
-        MQTTConnection.__client.connect(__server, __server_port)
-        MQTTConnection.__client.loop_start()
+        MQTTConnection.client = mqtt.Client(__client_id)
+        MQTTConnection.client.on_connect = __on_connect
+        MQTTConnection.client.on_disconnect = __on_disconnect
+        MQTTConnection.client.username_pw_set(username="admin", password="powerchain")
+        MQTTConnection.client.connect(__server, __server_port)
+        MQTTConnection.client.loop_start()
         time.sleep(5)
-        MQTTConnection.__client.loop_stop()
+        MQTTConnection.client.loop_stop()
 
-        return MQTTConnection.__client
+        return MQTTConnection.client
     except Exception as e:
         __LOG.error("Cannot connect to broker")
 

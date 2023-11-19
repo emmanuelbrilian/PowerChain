@@ -1,3 +1,4 @@
+import json
 import logging
 from util.mqtt_connection import connect_mqtt
 
@@ -25,16 +26,17 @@ class EnergyTransfer:
         }
 
     def send(self):
-        message = str(self.__to_json())
-        result = self.__mqtt_client.publish(f"{self.sender}__energy_transfer_request", message)
+        message = json.dumps(self.__to_json())
+        topic = f"{self.sender}_energy_transfer_request"
+        result = self.__mqtt_client.publish(topic, message)
         status = result[0]
         if status != 0:
             self.__LOG.error(
-                f"Failed publishing to topic {self.sender}, status: {status}"
+                f"Failed publishing to topic {topic}, status: {status}"
             )
         else:
             self.__LOG.info(
-                f"Message was published into topic '{self.sender}'"
+                f"Message {message} was published into topic '{topic}'"
             )
 
     def init_receive():
