@@ -30,7 +30,7 @@ class Peer:
         if status != 0:
             self.__LOG.error(f"Failed publishing to topic {topic}, status: {status}")
         else:
-            self.__LOG.info(f"Message {message['purchase_id']} was published into topic '{topic}'")
+            self.__LOG.info(f"Message {message} was published into topic '{topic}'")
 
     def init_receive(self):
         if not self.__is_listening:

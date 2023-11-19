@@ -18,11 +18,11 @@ class EnergyTransfer:
 
     def __to_json(self):
         return {
-            "type": "energy_transfer_request",
-            "sender": self.sender,
-            "receiver": self.receiver,
-            "transfer_amount": self.transfer_amount,
-            "purchase_id": self.purchase_id,
+            'type': 'energy_transfer_request',
+            'sender': self.sender,
+            'receiver': self.receiver,
+            'transfer_amount': self.transfer_amount,
+            'purchase_id': self.purchase_id,
         }
 
     def send(self):
