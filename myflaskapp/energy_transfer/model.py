@@ -7,6 +7,8 @@ class EnergyTransfer:
 
     __mqtt_client = connect_mqtt()
 
+    __transfer_acknowledge_topic = "energy_transfer_request_ack"
+
     def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
         self.sender = sender
         self.receiver = receiver
@@ -24,7 +26,7 @@ class EnergyTransfer:
 
     def send(self):
         message = str(self.__to_json())
-        result = self.__mqtt_client.publish(self.sender, message)
+        result = self.__mqtt_client.publish(f"{self.sender}__energy_transfer_request", message)
         status = result[0]
         if status != 0:
             self.__LOG.error(
@@ -36,12 +38,12 @@ class EnergyTransfer:
             )
 
     def init_receive():
-        EnergyTransfer.__mqtt_client.subscribe(EnergyTransfer.__transfer_ack_topic)
+        EnergyTransfer.__mqtt_client.subscribe(EnergyTransfer.__transfer_acknowledge_topic)
         EnergyTransfer.__mqtt_client.on_message = EnergyTransfer.__on_message
 
     def __on_message(client, user_data, message):
         EnergyTransfer.__LOG.info(
-            f"Receiving message from topic '{message.topic}' with payload '{message.payload}'"
+            f"Receiving message from topic '{message.topic}' with payload '{message.payload.decode()}'"
         )
 
-        # execute contract
+        # TODO execute contract

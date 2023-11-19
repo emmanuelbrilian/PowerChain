@@ -36,6 +36,8 @@ def decline_request():
         notification.status = "APPROVED"
         notification.save()
 
+        # TODO create/upload smart contract
+
         energy_transfer = EnergyTransfer(
             sender=notification.seller_id,
             receiver=purchase_order.buyer_id,
@@ -43,8 +45,6 @@ def decline_request():
             purchase_id=purchase_id,
         )
         energy_transfer.send()
-
-        # TODO do transaction to ether
 
     elif "decline" in request.form:
         notification.status = "DECLINED"
