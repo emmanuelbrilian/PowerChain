@@ -1,5 +1,7 @@
 import logging
+import sys
 import time
+from threading import Thread
 
 from mqtt_connection import MQTTConnection, init_mqtt
 from peers import Peer
@@ -7,17 +9,47 @@ from peers import Peer
 logging.basicConfig(level=logging.DEBUG)
 
 __LOG = logging.getLogger("App")
-__LOG.info("Start peer")
 
-init_mqtt()
-peer = Peer(id="peer1")
+program = sys.argv[0]
+peer_id = sys.argv[1]
+receiver = None
 
-try:
-    while True:
-        peer.init_receive(
-            lambda x, y, message: print(f"received message")
-        )
-        # time.sleep(1)
-except KeyboardInterrupt:
-    __LOG.info("Stopping peer")
-    MQTTConnection.client.loop_stop()
+if len(sys.argv) > 2:
+    receiver = sys.argv[2]
+
+__LOG.info(f"Starting {peer_id}")
+
+peer = Peer(id=peer_id)
+
+
+def receiver_func():
+    try:
+        while True:
+            peer.init_receive()
+            peer.init_receive_ack()
+    except KeyboardInterrupt:
+        __LOG.info(f"Stopping {peer_id}")
+        MQTTConnection.client.loop_stop()
+
+
+receiver_thread = Thread(target=receiver_func)
+receiver_thread.start()
+
+# If peer is sender
+# Only for testing
+if receiver != None:
+
+    def sender_func():
+        for x in range(10):
+            message = {
+                "type": "energy_transfer_request",
+                "sender": peer_id,
+                "receiver": receiver,
+                "purchase_id": f"purchase_{x}",
+            }
+
+            peer.send(message, receiver)
+            time.sleep(2)
+
+    sender_thread = Thread(target=sender_func)
+    sender_thread.start()

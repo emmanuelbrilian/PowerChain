@@ -13,10 +13,10 @@ __client_id = "powerchain_peer_1"
 def init_mqtt():
     MQTTConnection.is_connected = False
     MQTTConnection.client = None
-    connect_mqtt()
+    connect_mqtt(__client_id)
 
 
-def connect_mqtt():
+def connect_mqtt(client_id):
     __LOG.info("Connecting to broker")
 
     if MQTTConnection.is_connected:
@@ -24,7 +24,7 @@ def connect_mqtt():
         return MQTTConnection.client
 
     try:
-        MQTTConnection.client = mqtt.Client(__client_id)
+        MQTTConnection.client = mqtt.Client(client_id)
         MQTTConnection.client.on_connect = __on_connect
         MQTTConnection.client.on_disconnect = __on_disconnect
         MQTTConnection.client.username_pw_set(username="admin", password="powerchain")
