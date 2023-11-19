@@ -1,45 +1,44 @@
 import logging
-from util.mqtt_connection import connect_mqtt
 import json
 
-class EnergyTransfer:
-    __LOG = logging.getLogger("EnergyTransferModel")
-    __mqtt_client = connect_mqtt()
+from mqtt_connection import connect_mqtt, is_connected
 
-    def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
-        self.sender = sender
-        self.receiver = receiver
-        self.transfer_amount = transfer_amount
-        self.purchase_id = purchase_id
+class Peer:
+    def __init__(self, id) -> None:
+        self.__LOG = logging.getLogger("Peer")
+        self.__is_listening = False
+        self.id = id
+        self.__mqtt_client = connect_mqtt()
 
-    def __to_json(self):
-        return {
-            "type": "energy_transfer_request",
-            "sender": self.sender,
-            "receiver": self.receiver,
-            "transfer_amount": self.transfer_amount,
-            "purchase_id": self.purchase_id,
+
+    def send_electricity(self, message):
+        print(f"Received")
+        # decoded_message=str(message.payload.decode("utf-8"))
+        # print(f"Received `{decoded_message}`")
+        # msg=json.loads(decoded_message)
+        # print(f"Received `{msg}`")
+        # self.send_ack()
+
+
+    def init_receive(self, callback):
+        if not self.__is_listening:
+            self.__is_listening = True
+            topic = f"{self.id}_energy_transfer_request"
+            self.__mqtt_client.subscribe(topic)
+            self.__mqtt_client.on_message = callback
+            self.__LOG.info(f"Listening to {topic}")
+
+
+    def send_ack(self, purchase_id):
+        payload = {
+            "type": "energy_transfer_request_acknowledgment",
+            "purchase_id": purchase_id,
         }
-
-    def send(self):
-        message = json.dumps(self.__to_json())
-        topic = f"{self.receiver}/energy_transfer_request"
+        message = json.dumps(payload)
+        topic = f"energy_transfer_request_ack"
         result = self.__mqtt_client.publish(topic, message)
         status = result[0]
         if status != 0:
-            self.__LOG.error(
-                f"Failed publishing to topic {topic}, status: {status}"
-            )
+            self.__LOG.error(f"Failed publishing to topic {topic}, status: {status}")
         else:
-            self.__LOG.info(
-                f"Message was published into topic '{topic}'"
-            )
-
-    def init_receive(self, callback):
-        topic = f"{self.sender}/energy_transfer_ack"
-        self.__mqtt_client.subscribe(topic)
-        self.__mqtt_client.on_message = callback
-
-
-
-
+            self.__LOG.info(f"Message was published into topic '{topic}'")
