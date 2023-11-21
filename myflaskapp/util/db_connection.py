@@ -14,4 +14,6 @@ class MongoConnection:
     db = None
 
     def get_collection(collection_name):
+        if MongoConnection.db == None:
+            init_mongo()
         return MongoConnection.db[collection_name]

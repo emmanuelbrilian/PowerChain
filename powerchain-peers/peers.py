@@ -63,9 +63,8 @@ class Peer:
             self.__LOG.info(f"Listening to {topic}")
 
     def __on_message(self, x, y, message):
-        if message.topic == "energy_transfer_request_ack":
-            self.__LOG.info(
-                f"Received {message.payload.decode()} from topic {message.topic}"
-            )
-        else:
+        self.__LOG.info(
+            f"Received {message.payload.decode()} from topic {message.topic}"
+        )
+        if message.topic != "energy_transfer_request_ack":
             self.send_electricity(message)

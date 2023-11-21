@@ -1,16 +1,13 @@
 import json
 import logging
-from util.mqtt_connection import connect_mqtt
-
+from util.mqtt_connection import MQTTConnection
 
 class EnergyTransfer:
+
     __LOG = logging.getLogger("EnergyTransferModel")
 
-    __mqtt_client = connect_mqtt()
-
-    __transfer_acknowledge_topic = "energy_transfer_request_ack"
-
     def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
+        self.__mqtt_client = MQTTConnection.get_connection()
         self.sender = sender
         self.receiver = receiver
         self.transfer_amount = transfer_amount
@@ -39,12 +36,25 @@ class EnergyTransfer:
                 f"Message {message} was published into topic '{topic}'"
             )
 
-    def init_receive():
-        EnergyTransfer.__mqtt_client.subscribe(EnergyTransfer.__transfer_acknowledge_topic)
-        EnergyTransfer.__mqtt_client.on_message = EnergyTransfer.__on_message
 
-    def __on_message(client, user_data, message):
-        EnergyTransfer.__LOG.info(
+class EnergyTransferListener:
+
+    __LOG = logging.getLogger("EnergyTransferListener")
+
+    def __init__(self) -> None:
+        self.client = MQTTConnection.get_connection()
+        self.__is_listening = False
+        self.__transfer_acknowledge_topic = "energy_transfer_request_ack"
+
+    def init_receive(self):
+        if not self.__is_listening:
+            self.__is_listening = True
+            self.client.subscribe(self.__transfer_acknowledge_topic)
+            self.client.on_message = self.__on_message
+            self.__LOG.info(f"Listening to {self.__transfer_acknowledge_topic}")
+
+    def __on_message(self, client, user_data, message):
+        self.__LOG.info(
             f"Receiving message from topic '{message.topic}' with payload '{message.payload.decode()}'"
         )
 

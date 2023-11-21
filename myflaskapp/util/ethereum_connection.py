@@ -16,4 +16,6 @@ class EthereumConnection:
     ethereum_connection = None
 
     def get_ethereum_connetion():
+        if EthereumConnection == None:
+            init_ethereum()
         return EthereumConnection.ethereum_connection
