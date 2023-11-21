@@ -1,11 +1,11 @@
 import logging
 from flask import Blueprint, flash, redirect, render_template, request
 
-from notification.model import Notification
+from notification.model import abort_purchase_order_notifications, get_notification_by_id, get_pending_notifications_by_seller, save_notification
 from purchase_order.model import PurchaseOrder
 from purchase_order.service import select_candidates_and_send_notification
 from util.session import get_active_user, is_logged_in
-from energy_transfer.model import EnergyTransfer
+from energy_transfer.model import EnergyTransfer, send_energy_transfer_request
 
 __LOG = logging.getLogger("NotificationService")
 
@@ -18,7 +18,7 @@ notification_service = Blueprint(
 @is_logged_in
 def notifications_seller():
     active_user = get_active_user()
-    notifications = Notification.get_pending_notifications_by_seller(active_user.id)
+    notifications = get_pending_notifications_by_seller(active_user.id)
     return render_template("notifications_seller.html", notifications=notifications)
 
 
@@ -29,12 +29,12 @@ def decline_request():
     purchase_id = request.form["purchase_id"]
     seller_id = request.form["seller_id"]
 
-    notification = Notification.get_by_id(notification_id)
+    notification = get_notification_by_id(notification_id)
     purchase_order = PurchaseOrder.get_by_id(purchase_id)
 
     if "approve" in request.form:
         notification.status = "APPROVED"
-        notification.save()
+        save_notification(notification)
 
         # TODO create/upload smart contract
 
@@ -44,18 +44,19 @@ def decline_request():
             transfer_amount=notification.requested_energy,
             purchase_id=purchase_id,
         )
-        energy_transfer.send()
+        send_energy_transfer_request(energy_transfer)
 
     elif "decline" in request.form:
         notification.status = "DECLINED"
-        notification.save()
+        save_notification(notification)
+
 
         purchase_order.decline_candidate(seller_id)
         try:
             __recalculate_candidates(purchase_order)
         except Exception as e:
             __LOG.debug(f"Error: {e}")
-            Notification.abort_purchase_order_notifications(purchase_id)
+            abort_purchase_order_notifications(purchase_id)
             purchase_order.status = "NO SELLER"
 
         purchase_order.save()
