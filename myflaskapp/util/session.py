@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import flash, redirect, session
 
-from user.model import User
+from user.model import User, from_json
 
 def is_logged_in(f):
     @wraps(f)
@@ -16,7 +16,7 @@ def is_logged_in(f):
 
 def get_active_user():
     json = session["user"]
-    return User.from_json(json)
+    return from_json(json)
 
 def set_active_user(user: User):
     session["logged_in"] = True

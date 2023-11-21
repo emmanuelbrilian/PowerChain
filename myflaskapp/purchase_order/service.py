@@ -4,7 +4,7 @@ from flask import Blueprint, flash, redirect, render_template, request
 
 from notification.model import Notification
 from purchase_order.model import PurchaseOrder
-from user.model import User
+from user.model import User, get_other_users_with_available_energy
 from util.session import get_active_user, is_logged_in
 
 __LOG = logging.getLogger("PurchaseOrderService")
@@ -27,7 +27,7 @@ def purchase():
         buyer_coordinates=user.geo_coordinates,
     )
 
-    peers = User.get_other_users_with_available_energy(user.id)
+    peers = get_other_users_with_available_energy(user.id)
     if len(peers) <= 0:
         purchase_order.status = "NO SELLER"
         purchase_order.save()

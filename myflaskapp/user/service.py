@@ -13,7 +13,7 @@ from wtforms import (
 from passlib.hash import sha256_crypt
 
 
-from user.model import User
+from user.model import User, get_all, get_ethereum_account, get_ethereum_balance, get_ethereum_used_balance, get_login_user, is_email_registered, save
 from util.session import get_active_user, is_logged_in, set_active_user
 
 __LOGGER = logging.getLogger("UserService")
@@ -50,7 +50,7 @@ def register():
         return render_template("register.html", form=form)
 
     email = form.email.data
-    if User.is_email_registered(email):
+    if is_email_registered(email):
         flash("Email already registered. Please use a different email.", "danger")
         return render_template("register.html", form=form)
 
@@ -59,7 +59,7 @@ def register():
     password = sha256_crypt.encrypt(str(form.password.data))
     user_coordinates = form.coordinates.data
 
-    bcaddress = User.get_ethereum_account()
+    bcaddress = get_ethereum_account()
 
     user = User(
         username=username,
@@ -70,7 +70,7 @@ def register():
         bcaddress=bcaddress,
         current_energy=random.randint(0, 800)
     )
-    user.save()
+    save(user=user)
 
     flash("You are now registered and can log in", "success")
     return redirect("/")
@@ -87,7 +87,7 @@ def login():
     password = request.form["password"]
 
     try:
-        user = User.get_login_user(username, password)
+        user = get_login_user(username, password)
         set_active_user(user)
         flash("You are now logged in", "success")
         return redirect("/dashboard")
@@ -107,7 +107,7 @@ def logout():
 @user_service.route("/peers", methods=["GET"])
 @is_logged_in
 def open_peers_page():
-    users = User.get_all()
+    users = get_all()
     return render_template("peers.html", users=users)
 
 
@@ -118,6 +118,6 @@ def open_dashboard_page():
     return render_template(
         "dashboard.html",
         user=user,
-        ethereum_balance=user.get_ethereum_balance(),
-        ethereum_used_balance=user.get_ethereum_used_balance(),
+        ethereum_balance=get_ethereum_balance(),
+        ethereum_used_balance=get_ethereum_used_balance(),
     )
