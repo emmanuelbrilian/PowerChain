@@ -7,15 +7,6 @@ from geopy.geocoders import Nominatim
 from util.ethereum_connection import get_ethereum_connetion
 from util.db_connection import get_collection
 
-__LOG = logging.getLogger("UserModel")
-
-__USER_COLLECTION_NAME = "users"
-
-__user_collection = get_collection(__USER_COLLECTION_NAME)
-
-__ethereum_connection = get_ethereum_connetion()
-
-
 class User:
     def __init__(
         self,
@@ -59,6 +50,14 @@ class User:
         }
 
 
+__LOG = logging.getLogger("UserModel")
+
+__USER_COLLECTION_NAME = "users"
+
+def __get_collection():
+    return get_collection(__USER_COLLECTION_NAME)
+
+
 def from_json(json):
     return User(
         id=str(json["_id"]),
@@ -89,44 +88,47 @@ def initialize_geo_address(user: User):
 
 
 def save(user: User):
+    collection = __get_collection()
     data = user.to_json()
     del data["_id"]
 
     if user.id is None:
-        result = __user_collection.insert_one(data)
+        result = collection.insert_one(data)
         user.id = result.inserted_id
     else:
-        __user_collection.update_one(
+        collection.update_one(
             {"_id": ObjectId(user.id)},
             {"$set": data},
         )
 
 
 def get_ethereum_balance():
-    ganache_account = __ethereum_connection.eth.accounts[0]
-    ethereum_balance_wei = __ethereum_connection.eth.get_balance(ganache_account)
-    ethereum_balance = __ethereum_connection.from_wei(ethereum_balance_wei, "ether")
+    ethereum_connection = get_ethereum_connetion()
+    ganache_account = ethereum_connection.eth.accounts[0]
+    ethereum_balance_wei = ethereum_connection.eth.get_balance(ganache_account)
+    ethereum_balance = ethereum_connection.from_wei(ethereum_balance_wei, "ether")
     return ethereum_balance
 
 
 def get_ethereum_used_balance():
-    ganache_account = __ethereum_connection.eth.accounts[0]
-    ethereum_used_balance_wei = __ethereum_connection.eth.get_transaction_count(
+    ethereum_connection = get_ethereum_connetion()
+    ganache_account = ethereum_connection.eth.accounts[0]
+    ethereum_used_balance_wei = ethereum_connection.eth.get_transaction_count(
         ganache_account
     )
-    ethereum_used_balance = __ethereum_connection.from_wei(
+    ethereum_used_balance = ethereum_connection.from_wei(
         ethereum_used_balance_wei, "ether"
     )
     return ethereum_used_balance
 
 
 def is_email_registered(email) -> bool:
-    result = __user_collection.find_one({"email": email})
+    result = __get_collection().find_one({"email": email})
     return result != None
 
 
 def get_login_user(username, password):
-    result = __user_collection.find_one({"username": username})
+    result = __get_collection().find_one({"username": username})
     if result == None:
         __LOG.debug("Username ${username} is not found")
         raise Exception("Invalid username or password")
@@ -141,29 +143,29 @@ def get_login_user(username, password):
 
 
 def get_by_username(username):
-    result = __user_collection.find({"username": username})
+    result = __get_collection().find({"username": username})
     return from_json(result)
 
 
 def get_all():
-    results = __user_collection.find()
+    results = __get_collection().find()
     return __from_json_array(results)
 
 
 def get_other_users_with_available_energy(user_id):
-    results = __user_collection.find(
+    results = __get_collection().find(
         {"current_energy": {"$gt": 0}, "_id": {"$ne": ObjectId(user_id)}}
     )
     return __from_json_array(results)
 
 
 def __is_bcaddress_used(ethereum_account):
-    result = __user_collection.find_one({"bcaddress": ethereum_account})
+    result = __get_collection().find_one({"bcaddress": ethereum_account})
     return result != None
 
 
 def get_ethereum_account():
-    for ethereum_account in __ethereum_connection.eth.accounts:
+    for ethereum_account in get_ethereum_connetion().eth.accounts:
         __LOG.debug(f"Found account: {ethereum_account}")
         if not __is_bcaddress_used(ethereum_account):
             return ethereum_account

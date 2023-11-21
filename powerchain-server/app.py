@@ -18,16 +18,25 @@ logging.basicConfig(level=logging.DEBUG)
 __LOG = logging.getLogger("App")
 __LOG.info("Start server")
 
-mqtt_host="localhost"
+
+mongo_host = "localhost"
 if len(sys.argv) >= 2:
-    mqtt_host = sys.argv[1]
+    mongo_host = sys.argv[1]
 
-mqtt_client_id="powerchain-server-1"
-if len(sys.argv) >= 3:
-    mqtt_client_id = sys.argv[2]
+ethereum_host = "localhost"
+if (len(sys.argv) >= 3):
+    ethereum_host = sys.argv[2]
 
-init_mongo()
-init_ethereum()
+mqtt_host = "localhost"
+if len(sys.argv) >= 4:
+    mqtt_host = sys.argv[3]
+
+mqtt_client_id = "powerchain-server-1"
+if len(sys.argv) >= 5:
+    mqtt_client_id = sys.argv[4]
+
+init_mongo(mongo_host)
+init_ethereum(ethereum_host)
 
 
 def receiver_func():
@@ -65,4 +74,4 @@ def about():
 
 if __name__ == "__main__":
     app.secret_key = "secret123"
-    app.run(port=5001)
+    app.run(host="0.0.0.0", port=5001)

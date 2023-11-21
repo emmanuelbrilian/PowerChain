@@ -9,7 +9,7 @@ class MQTTConnection:
     client: mqtt.Client = None
     is_connected = False
     mqtt_host = "localhost"
-    client_id = "powerchain_server_2"
+    client_id = "powerchain_server_1"
     mqtt_port = 1883
 
 def init_mqtt(mqtt_host, client_id):

@@ -5,8 +5,6 @@ from util.mqtt_connection import MQTTConnection, get_mqtt_connection
 __LOG = logging.getLogger("EnergyTransferModel")
 
 __transfer_acknowledge_topic = "energy_transfer_request_ack"
-    
-__mqtt_client = get_mqtt_connection()
 
 class __Listener:
     is_listening = False
@@ -31,7 +29,7 @@ class EnergyTransfer:
 def send_energy_transfer_request(energy_transfer: EnergyTransfer):
     message = json.dumps(energy_transfer.to_json())
     topic = f"{energy_transfer.sender}_energy_transfer_request"
-    result = __mqtt_client.publish(topic, message)
+    result = get_mqtt_connection().publish(topic, message)
     status = result[0]
     if status != 0:
         __LOG.error(
@@ -44,13 +42,12 @@ def send_energy_transfer_request(energy_transfer: EnergyTransfer):
 
 
 def init_ack_listener():
-    if not MQTTConnection.is_connected:
-        get_mqtt_connection()
+    mqtt_client = get_mqtt_connection()
 
     if not __Listener.is_listening:
         __Listener.is_listening = True
-        __mqtt_client.subscribe(__transfer_acknowledge_topic)
-        __mqtt_client.on_message = __on_message
+        mqtt_client.subscribe(__transfer_acknowledge_topic)
+        mqtt_client.on_message = __on_message
         __LOG.info(f"Listening to {__transfer_acknowledge_topic}")
 
 def __on_message(client, user_data, message):

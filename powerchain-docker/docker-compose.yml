@@ -39,6 +39,8 @@ services:
       - 5001:5001
     environment:
       - MQTT_HOST=mosquitto
+      - MONGO_HOST=mongo
+      - ETHEREUM_HOST=ganache
 
   peer1:
     image: powerchain/peer:latest
@@ -48,4 +50,48 @@ services:
     container_name: powerchain-peer-1
     environment:
       - PEER_ID=651a0abda95812bb9bdd973a
+      - MQTT_HOST=mosquitto
+
+  peer2:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-2
+    environment:
+      # change with peer ObjectId
+      - PEER_ID=peer2
+      - MQTT_HOST=mosquitto
+
+  peer3:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-3
+    environment:
+      # change with peer ObjectId
+      - PEER_ID=peer3
+      - MQTT_HOST=mosquitto
+
+  peer4:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-4
+    environment:
+      # change with peer ObjectId
+      - PEER_ID=peer4
+      - MQTT_HOST=mosquitto
+
+  peer5:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-5
+    environment:
+      # change with peer ObjectId
+      - PEER_ID=peer5
       - MQTT_HOST=mosquitto

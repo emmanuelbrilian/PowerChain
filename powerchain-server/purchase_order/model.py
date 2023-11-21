@@ -5,10 +5,6 @@ from geopy.distance import geodesic
 
 from util.db_connection import get_collection
 
-__purchase_order_collection_name = "purchase_orders"
-
-__purchase_order_collection = get_collection(__purchase_order_collection_name)
-
 
 class PurchaseOrder:
     __LOG = logging.getLogger("PurchaseOrder")
@@ -170,22 +166,28 @@ class Candidate:
         }
 
 
+__purchase_order_collection_name = "purchase_orders"
+
+def __get_collection():
+    return get_collection(__purchase_order_collection_name)
+    
 def save_po(purchase_order: PurchaseOrder):
+    collection = __get_collection()
     data = purchase_order.to_json()
     del data["_id"]
 
     if purchase_order.id is None:
-        result = __purchase_order_collection.insert_one(data)
+        result = collection.insert_one(data)
         purchase_order.id = result.inserted_id
     else:
-        __purchase_order_collection.update_one(
+        collection.update_one(
             {"_id": ObjectId(purchase_order.id)},
             {"$set": data},
         )
 
 
 def get_po_by_id(id):
-    result = __purchase_order_collection.find_one({"_id": ObjectId(id)})
+    result = __get_collection().find_one({"_id": ObjectId(id)})
     return __from_po_json(result)
 
 

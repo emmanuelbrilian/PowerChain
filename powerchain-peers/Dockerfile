@@ -12,4 +12,4 @@ ADD peers.py .
 RUN pip install --upgrade pip
 RUN pip install paho-mqtt
 
-ENTRYPOINT python app.py $MQTT_HOST $PEER_ID
+ENTRYPOINT python app.py $PEER_ID $MQTT_HOST
