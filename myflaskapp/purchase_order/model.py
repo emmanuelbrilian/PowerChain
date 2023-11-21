@@ -5,14 +5,14 @@ from geopy.distance import geodesic
 
 from util.db_connection import get_collection
 
+__purchase_order_collection_name = "purchase_orders"
+
+__purchase_order_collection = get_collection(__purchase_order_collection_name)
+
 
 class PurchaseOrder:
-    __LOG = logging.getLogger("PurchaseOrderModel")
-
-    __purchase_order_collection_name = "purchase_orders"
-
-    __purchase_order_collection = get_collection(__purchase_order_collection_name)
-
+    __LOG = logging.getLogger("PurchaseOrder")
+    
     def __init__(
         self,
         requested_amount,
@@ -50,14 +50,14 @@ class PurchaseOrder:
                 Candidate(seller.id, seller.username, distance, energy_balance)
             )
 
-        PurchaseOrder.__LOG.debug(f"Found {len(candidates)} candidates")
+        self.__LOG.debug(f"Found {len(candidates)} candidates")
         candidates.sort(key=lambda c: c.distance)
         self.candidates = candidates
 
     def isTotalEnergySufficient(self) -> bool:
         available_energies = map(lambda c: c.available_energy, self.candidates)
         total_available_energy = sum(available_energies)
-        PurchaseOrder.__LOG.debug(
+        self.__LOG.debug(
             f"Total available energy: {total_available_energy}, requested energy: {self.requested_amount}"
         )
         return total_available_energy < self.requested_amount
@@ -123,20 +123,7 @@ class PurchaseOrder:
         candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
         candidate.approve()
 
-    def save(self):
-        data = self.__to_json()
-        del data["_id"]
-
-        if self.id is None:
-            result = PurchaseOrder.__purchase_order_collection.insert_one(data)
-            self.id = result.inserted_id
-        else:
-            PurchaseOrder.__purchase_order_collection.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": data},
-            )
-
-    def __to_json(self):
+    def to_json(self):
         return {
             "_id": self.id,
             "buyer_id": self.buyer_id,
@@ -145,33 +132,11 @@ class PurchaseOrder:
             "requested_amount": self.requested_amount,
             "provider_type": self.provider_type,
             "status": self.status,
-            "candidates": Candidate.to_json_array(self.candidates),
+            "candidates": to_candidates_json(self.candidates),
         }
-
-    # class methods
-
-    def from_json(json):
-        return PurchaseOrder(
-            id=str(json["_id"]),
-            buyer_id=json["buyer_id"],
-            buyer_username=json["buyer_username"],
-            buyer_coordinates=json["buyer_coordinates"],
-            requested_amount=json["requested_amount"],
-            provider_type=json["provider_type"],
-            status=json["status"],
-            candidates=Candidate.from_json_array(json["candidates"]),
-        )
-
-    def get_by_id(id):
-        result = PurchaseOrder.__purchase_order_collection.find_one(
-            {"_id": ObjectId(id)}
-        )
-        return PurchaseOrder.from_json(result)
 
 
 class Candidate:
-    __LOG = logging.getLogger("CandidateModel")
-
     def __init__(
         self,
         seller_id,
@@ -204,26 +169,59 @@ class Candidate:
             "status": self.status,
         }
 
-    # static methods
 
-    def __from_json(json) -> None:
-        return Candidate(
-            seller_id=json["seller_id"],
-            seller_username=json["seller_username"],
-            distance=json["distance"],
-            available_energy=json["available_energy"],
-            requested_energy=json["requested_energy"],
-            status=json["status"],
+def save_po(purchase_order: PurchaseOrder):
+    data = purchase_order.to_json()
+    del data["_id"]
+
+    if purchase_order.id is None:
+        result = __purchase_order_collection.insert_one(data)
+        purchase_order.id = result.inserted_id
+    else:
+        __purchase_order_collection.update_one(
+            {"_id": ObjectId(purchase_order.id)},
+            {"$set": data},
         )
 
-    def to_json_array(candidates):
-        json = []
-        for c in candidates:
-            json.append(c.to_json())
-        return json
 
-    def from_json_array(json):
-        candidates = []
-        for j in json:
-            candidates.append(Candidate.__from_json(j))
-        return candidates
+def get_po_by_id(id):
+    result = __purchase_order_collection.find_one({"_id": ObjectId(id)})
+    return __from_po_json(result)
+
+
+def __from_po_json(json):
+    return PurchaseOrder(
+        id=str(json["_id"]),
+        buyer_id=json["buyer_id"],
+        buyer_username=json["buyer_username"],
+        buyer_coordinates=json["buyer_coordinates"],
+        requested_amount=json["requested_amount"],
+        provider_type=json["provider_type"],
+        status=json["status"],
+        candidates=__from_candidates_json(json["candidates"]),
+    )
+
+
+def __from_candidates_json(json):
+    candidates = []
+    for j in json:
+        candidates.append(__from_candidate_json(j))
+    return candidates
+
+
+def __from_candidate_json(json) -> None:
+    return Candidate(
+        seller_id=json["seller_id"],
+        seller_username=json["seller_username"],
+        distance=json["distance"],
+        available_energy=json["available_energy"],
+        requested_energy=json["requested_energy"],
+        status=json["status"],
+    )
+
+
+def to_candidates_json(candidates):
+    json = []
+    for c in candidates:
+        json.append(c.to_json())
+    return json

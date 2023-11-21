@@ -7,7 +7,7 @@ from notification.model import (
     get_pending_notification_by_purchase_and_seller,
     save_notification,
 )
-from purchase_order.model import PurchaseOrder
+from purchase_order.model import PurchaseOrder, save_po
 from user.model import get_other_users_with_available_energy
 from util.session import get_active_user, is_logged_in
 
@@ -32,7 +32,7 @@ def purchase():
     peers = get_other_users_with_available_energy(user.id)
     if len(peers) <= 0:
         purchase_order.status = "NO SELLER"
-        purchase_order.save()
+        save_po(purchase_order)
         flash("No available candidates", "error")
         return redirect("/dashboard")
 
@@ -40,15 +40,15 @@ def purchase():
 
     if purchase_order.isTotalEnergySufficient():
         purchase_order.status = "NO ENERGY"
-        purchase_order.save()
+        save_po(purchase_order)
         flash("Requested amount cannot be fulfilled", "danger")
         return render_template("purchase.html")
 
     purchase_order.decideProviderType()
-    purchase_order.save()
+    save_po(purchase_order)
 
     select_candidates_and_send_notification(purchase_order)
-    purchase_order.save()
+    save_po(purchase_order)
 
     flash("Your order is being processed", "success")
     return redirect("/dashboard")
@@ -60,7 +60,7 @@ def open_purchase_page():
     return render_template("purchase.html")
 
 
-def select_candidates_and_send_notification(purchase_order):
+def select_candidates_and_send_notification(purchase_order: PurchaseOrder):
     if purchase_order.isSingleProvider():
         selected_candidate = purchase_order.select_single_provider_candidate()
         notification = Notification(
@@ -87,4 +87,4 @@ def select_candidates_and_send_notification(purchase_order):
                     seller_username=sc.seller_username,
                     requested_energy=sc.requested_energy,
                 )
-            notification.save()
+            save_notification(notification)

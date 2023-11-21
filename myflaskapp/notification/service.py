@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, flash, redirect, render_template, request
 
 from notification.model import abort_purchase_order_notifications, get_notification_by_id, get_pending_notifications_by_seller, save_notification
-from purchase_order.model import PurchaseOrder
+from purchase_order.model import PurchaseOrder, get_po_by_id, save_po
 from purchase_order.service import select_candidates_and_send_notification
 from util.session import get_active_user, is_logged_in
 from energy_transfer.model import EnergyTransfer, send_energy_transfer_request
@@ -30,7 +30,7 @@ def decline_request():
     seller_id = request.form["seller_id"]
 
     notification = get_notification_by_id(notification_id)
-    purchase_order = PurchaseOrder.get_by_id(purchase_id)
+    purchase_order = get_po_by_id(purchase_id)
 
     if "approve" in request.form:
         notification.status = "APPROVED"
@@ -59,7 +59,7 @@ def decline_request():
             abort_purchase_order_notifications(purchase_id)
             purchase_order.status = "NO SELLER"
 
-        purchase_order.save()
+        save_po(purchase_order)
 
     flash("Response accepted", "success")
     return redirect("/notifications_seller")
