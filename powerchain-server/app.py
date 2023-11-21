@@ -52,6 +52,17 @@ def receiver_func():
 receiver_thread = Thread(target=receiver_func)
 receiver_thread.start()
 
+# TODO add available electricity updater from SQL db
+# def update_peer_available_electricity():
+#     while True:
+#       # connect to sql db
+#       # read available electricity data by id from sql db
+#       # update available electricity data in mongodb user collection
+#       # time.sleep(600) # every 10 minutes
+#
+# electricity_updater = Thread(target=update_peer_available_electricity)
+# electricity_updater.start()
+
 app = Flask(__name__)
 app.secret_key = "secret123"
 app.register_blueprint(purchase_order_service)

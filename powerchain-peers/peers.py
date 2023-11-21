@@ -18,8 +18,8 @@ class Peer:
         purchase_id = json_message["purchase_id"]
         self.__LOG.info(f"Received message {purchase_id} from topic {message.topic}")
 
-        ## DO SOMETHING
-
+        # Because of simulation, this peer was assumed will send the electricity automatically
+        # So it just need to send acknowledgement message to server
         self.send_ack(purchase_id=purchase_id)
 
     def send(self, message, receiver):
