@@ -32,7 +32,7 @@ services:
   server:
     image: powerchain/server:latest
     build:
-      context: ../myflaskapp
+      context: ../powerchain-server
       dockerfile: Dockerfile
     container_name: powerchain-server
     ports:
