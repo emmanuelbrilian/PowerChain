@@ -1,6 +1,6 @@
 import json
 import logging
-from util.mqtt_connection import get_mqtt_connection
+from util.mqtt_connection import MQTTConnection, get_mqtt_connection
 
 __LOG = logging.getLogger("EnergyTransferModel")
 
@@ -44,6 +44,9 @@ def send_energy_transfer_request(energy_transfer: EnergyTransfer):
 
 
 def init_ack_listener():
+    if not MQTTConnection.is_connected:
+        get_mqtt_connection()
+
     if not __Listener.is_listening:
         __Listener.is_listening = True
         __mqtt_client.subscribe(__transfer_acknowledge_topic)

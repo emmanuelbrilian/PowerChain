@@ -28,3 +28,24 @@ services:
     container_name: powerchain-ganache
     ports:
       - 8545:8545
+
+  server:
+    image: powerchain/server:latest
+    build:
+      context: ../myflaskapp
+      dockerfile: Dockerfile
+    container_name: powerchain-server
+    ports:
+      - 5001:5001
+    environment:
+      - MQTT_HOST=mosquitto
+
+  peer1:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-1
+    environment:
+      - PEER_ID=651a0abda95812bb9bdd973a
+      - MQTT_HOST=mosquitto

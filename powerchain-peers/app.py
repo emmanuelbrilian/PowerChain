@@ -11,14 +11,16 @@ logging.basicConfig(level=logging.DEBUG)
 __LOG = logging.getLogger("App")
 
 program = sys.argv[0]
-peer_id = sys.argv[1]
+mqtt_host = sys.argv[1]
+peer_id = sys.argv[2]
 receiver = None
 
-if len(sys.argv) > 2:
-    receiver = sys.argv[2]
+if len(sys.argv) >= 4:
+    receiver = sys.argv[3]
 
 __LOG.info(f"Starting {peer_id}")
 
+init_mqtt(mqtt_host=mqtt_host)
 peer = Peer(id=peer_id)
 
 

@@ -1,6 +1,6 @@
 import logging
+import sys
 from threading import Thread
-import time
 
 from flask import Flask, render_template
 from flask_wtf.csrf import CSRFProtect
@@ -18,13 +18,21 @@ logging.basicConfig(level=logging.DEBUG)
 __LOG = logging.getLogger("App")
 __LOG.info("Start server")
 
+mqtt_host="localhost"
+if len(sys.argv) >= 2:
+    mqtt_host = sys.argv[1]
+
+mqtt_client_id="powerchain-server-1"
+if len(sys.argv) >= 3:
+    mqtt_client_id = sys.argv[2]
+
 init_mongo()
 init_ethereum()
 
 
 def receiver_func():
     try:
-        init_mqtt()
+        init_mqtt(mqtt_host, mqtt_client_id)
         while True:
             init_ack_listener()
     except KeyboardInterrupt:
