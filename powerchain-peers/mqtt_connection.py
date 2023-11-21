@@ -44,7 +44,7 @@ def connect_mqtt(client_id):
 
 def __on_connect(client, user_data, flags, response_code):
     if response_code == 0:
-        __LOG.info("Connected to broker")
+        __LOG.info(f"Connected to broker at {MQTTConnection.host}:{MQTTConnection.port}")
         MQTTConnection.is_connected = True
     else:
         __LOG.error(f"Failed to connect to broker with response code {response_code}")

@@ -27,7 +27,6 @@ def receiver_func():
     try:
         while True:
             peer.init_receive()
-            peer.init_receive_ack()
     except KeyboardInterrupt:
         __LOG.info(f"Stopping {peer_id}")
         MQTTConnection.client.loop_stop()
@@ -41,6 +40,7 @@ receiver_thread.start()
 if receiver != None:
 
     def sender_func():
+        peer.init_receive_ack()
         for x in range(10):
             message = {
                 "type": "energy_transfer_request",
