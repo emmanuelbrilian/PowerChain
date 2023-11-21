@@ -118,6 +118,6 @@ def open_dashboard_page():
     return render_template(
         "dashboard.html",
         user=user,
-        ethereum_balance=get_ethereum_balance(),
-        ethereum_used_balance=get_ethereum_used_balance(),
+        ethereum_balance=get_ethereum_balance(user.bcaddress),
+        ethereum_used_balance=get_ethereum_used_balance(user.bcaddress),
     )

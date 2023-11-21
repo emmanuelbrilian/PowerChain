@@ -21,7 +21,6 @@ def __connect_to_ganache(ethereum_address):
 
 def init_ethereum(ethereum_host):
     __EthereumConnection.ethereum_host = ethereum_host
-    
     __EthereumConnection.ethereum_connection = __connect_to_ganache(__get_ethereum_url())
 
 

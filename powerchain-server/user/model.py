@@ -102,17 +102,15 @@ def save(user: User):
         )
 
 
-def get_ethereum_balance():
+def get_ethereum_balance(ganache_account):
     ethereum_connection = get_ethereum_connetion()
-    ganache_account = ethereum_connection.eth.accounts[0]
     ethereum_balance_wei = ethereum_connection.eth.get_balance(ganache_account)
     ethereum_balance = ethereum_connection.from_wei(ethereum_balance_wei, "ether")
     return ethereum_balance
 
 
-def get_ethereum_used_balance():
+def get_ethereum_used_balance(ganache_account):
     ethereum_connection = get_ethereum_connetion()
-    ganache_account = ethereum_connection.eth.accounts[0]
     ethereum_used_balance_wei = ethereum_connection.eth.get_transaction_count(
         ganache_account
     )
