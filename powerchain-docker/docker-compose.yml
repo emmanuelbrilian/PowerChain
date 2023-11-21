@@ -49,7 +49,7 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-1
     environment:
-      - PEER_ID=651a0abda95812bb9bdd973a
+      - PEER_ID=651a0a96a95812bb9bdd9739
       - MQTT_HOST=mosquitto
 
   peer2:
@@ -59,8 +59,7 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-2
     environment:
-      # change with peer ObjectId
-      - PEER_ID=peer2
+      - PEER_ID=651a0abda95812bb9bdd973a
       - MQTT_HOST=mosquitto
 
   peer3:
@@ -70,8 +69,7 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-3
     environment:
-      # change with peer ObjectId
-      - PEER_ID=peer3
+      - PEER_ID=651a0acda95812bb9bdd973b
       - MQTT_HOST=mosquitto
 
   peer4:
@@ -81,8 +79,7 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-4
     environment:
-      # change with peer ObjectId
-      - PEER_ID=peer4
+      - PEER_ID=651a0adda95812bb9bdd973c
       - MQTT_HOST=mosquitto
 
   peer5:
@@ -92,6 +89,55 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-5
     environment:
-      # change with peer ObjectId
-      - PEER_ID=peer5
+      - PEER_ID=651a0aeca95812bb9bdd973d
+      - MQTT_HOST=mosquitto
+
+  peer6:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-6
+    environment:
+      - PEER_ID=651a0b03a95812bb9bdd973e
+      - MQTT_HOST=mosquitto
+
+  peer7:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-7
+    environment:
+      - PEER_ID=651a0b1ba95812bb9bdd973f
+      - MQTT_HOST=mosquitto
+
+  peer8:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-8
+    environment:
+      - PEER_ID=651a46f25d00604a3eb03d6e
+      - MQTT_HOST=mosquitto
+
+  peer9:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-9
+    environment:
+      - PEER_ID=peer9
+      - MQTT_HOST=mosquitto
+
+  peer10:
+    image: powerchain/peer:latest
+    build:
+      context: ../powerchain-peers
+      dockerfile: Dockerfile
+    container_name: powerchain-peer-10
+    environment:
+      - PEER_ID=peer10
       - MQTT_HOST=mosquitto
