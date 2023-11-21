@@ -9,26 +9,21 @@ __client_id = "powerchain_server_1"
 __mqtt_host = "localhost"
 __mqtt_port = 1883
 
-class MQTTConnection:
+class __MQTTConnection:
     client: mqtt.Client = None
     is_connected = False
 
-    def get_connection():
-        if MQTTConnection.client == None:
-            init_mqtt()
-        return MQTTConnection.client
-
-
 def init_mqtt():
-    MQTTConnection.client = __connect_mqtt()
+    get_mqtt_connection()
+
+def get_mqtt_connection():
+    if __MQTTConnection.client == None:
+        __MQTTConnection.client = __connect_mqtt()
+    return __MQTTConnection.client
 
 
 def __connect_mqtt():
     __LOG.info("Connecting to broker")
-
-    if MQTTConnection.is_connected:
-        __LOG.info("Using current connection")
-        return MQTTConnection.client
 
     try:
         client = mqtt.Client(__client_id)
@@ -38,7 +33,6 @@ def __connect_mqtt():
         client.connect_async(__mqtt_host, __mqtt_port)
         client.loop_start()
         time.sleep(5)
-        # client.loop_stop()
 
         return client
     except Exception as e:
@@ -47,12 +41,12 @@ def __connect_mqtt():
 
 def __on_connect(client, user_data, flags, response_code):
     if response_code == 0:
-        MQTTConnection.is_connected = True
+        __MQTTConnection.is_connected = True
         __LOG.info("Connected to broker")
     else:
         __LOG.error(f"Failed to connect to broker with response code {response_code}")
 
 
 def __on_disconnect(client, user_data, response_code):
-    MQTTConnection.is_connected = False
+    __MQTTConnection.is_connected = False
     __LOG.info(f"Disconnected. Reason: {str(response_code)}")

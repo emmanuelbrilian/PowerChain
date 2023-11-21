@@ -5,13 +5,13 @@ from passlib.hash import sha256_crypt
 from geopy.geocoders import Nominatim
 
 from util.ethereum_connection import get_ethereum_connetion
-from util.db_connection import MongoConnection
+from util.db_connection import get_collection
 
 __LOG = logging.getLogger("UserModel")
 
 __USER_COLLECTION_NAME = "users"
 
-__user_collection = MongoConnection.get_collection(__USER_COLLECTION_NAME)
+__user_collection = get_collection(__USER_COLLECTION_NAME)
 
 __ethereum_connection = get_ethereum_connetion()
 

@@ -1,13 +1,14 @@
 import json
 import logging
-from util.mqtt_connection import MQTTConnection
+from util.mqtt_connection import get_mqtt_connection
 
 class EnergyTransfer:
 
     __LOG = logging.getLogger("EnergyTransferModel")
+    
+    __mqtt_client = get_mqtt_connection()
 
     def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
-        self.__mqtt_client = MQTTConnection.get_connection()
         self.sender = sender
         self.receiver = receiver
         self.transfer_amount = transfer_amount
@@ -41,8 +42,9 @@ class EnergyTransferListener:
 
     __LOG = logging.getLogger("EnergyTransferListener")
 
+    client = get_mqtt_connection()
+
     def __init__(self) -> None:
-        self.client = MQTTConnection.get_connection()
         self.__is_listening = False
         self.__transfer_acknowledge_topic = "energy_transfer_request_ack"
 
