@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 from web3 import Web3
 
 __LOG = logging.getLogger("EthereumCOnnection")
@@ -28,3 +30,17 @@ def get_ethereum_connetion():
     if __EthereumConnection.ethereum_connection == None:
         init_ethereum(__EthereumConnection.ethereum_host)
     return __EthereumConnection.ethereum_connection
+
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+__f_abi = open(os.path.join(__location__, 'ElectricityTrade.abi'), 'r')
+__abi = json.loads(__f_abi.read())
+__f_abi.close()
+def get_trade_contract_abi():
+    return __abi
+
+__f_bin = open(os.path.join(__location__, 'ElectricityTrade.bin'), 'r')
+__bin = __f_bin.read()
+__f_bin.close()
+def get_trade_contract_bin():
+      return __bin

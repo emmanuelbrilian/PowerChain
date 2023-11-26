@@ -1,6 +1,10 @@
 import json
 import logging
+
+from user.model import get_by_username
+from purchase_order.model import get_po_by_id
 from util.mqtt_connection import MQTTConnection, get_mqtt_connection
+from util.ethereum_connection import get_ethereum_connetion, get_trade_contract_abi
 
 __LOG = logging.getLogger("EnergyTransferModel")
 
@@ -11,11 +15,12 @@ class __Listener:
 
 class EnergyTransfer:
 
-    def __init__(self, sender, receiver, transfer_amount, purchase_id) -> None:
+    def __init__(self, sender, receiver, transfer_amount, purchase_id, contract) -> None:
         self.sender = sender
         self.receiver = receiver
         self.transfer_amount = transfer_amount
         self.purchase_id = purchase_id
+        self.contract = contract
 
     def to_json(self):
         return {
@@ -24,6 +29,7 @@ class EnergyTransfer:
             'receiver': self.receiver,
             'transfer_amount': self.transfer_amount,
             'purchase_id': self.purchase_id,
+            'contract': self.contract
         }
 
 def send_energy_transfer_request(energy_transfer: EnergyTransfer):
@@ -51,8 +57,26 @@ def init_ack_listener():
         __LOG.info(f"Listening to {__transfer_acknowledge_topic}")
 
 def __on_message(client, user_data, message):
+    decoded_message = str(message.payload.decode("utf-8"))
     __LOG.info(
-        f"Receiving message from topic '{message.topic}' with payload '{message.payload.decode()}'"
+        f"Receiving message from topic '{message.topic}' with payload '{decoded_message}'"
     )
 
+    json_message = json.loads(decoded_message)
+    purchase_id = json_message["purchase_id"]
+    contract = json_message["contract"]
+    po = get_po_by_id(purchase_id)
+    buyer = get_by_username(po.buyer_username)
+
     # TODO execute contract
+    w3 = get_ethereum_connetion()
+    gas_price = 1000000
+    buyer_txn = { 'from': buyer.bcaddress, 'gas': gas_price }
+
+    abi = get_trade_contract_abi()
+
+    trade = w3.eth.contract(address=contract, abi=abi)
+    buyer_txn_hash = trade.functions.buy().transact(buyer_txn)
+    buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
+
+    __LOG.info(f"Completed transaction: {buyer_txn_receipt}")

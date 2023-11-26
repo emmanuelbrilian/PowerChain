@@ -16,11 +16,12 @@ class Peer:
         decoded_message = str(message.payload.decode("utf-8"))
         json_message = json.loads(decoded_message)
         purchase_id = json_message["purchase_id"]
+        contract = json_message["contract"]
         self.__LOG.info(f"Received message {purchase_id} from topic {message.topic}")
 
         # Because of simulation, this peer was assumed will send the electricity automatically
         # So it just need to send acknowledgement message to server
-        self.send_ack(purchase_id=purchase_id)
+        self.send_ack(purchase_id=purchase_id, contract=contract)
 
     def send(self, message, receiver):
         msg = json.dumps(message)
@@ -40,10 +41,11 @@ class Peer:
             self.__mqtt_client.on_message = self.__on_message
             self.__LOG.info(f"Listening to {topic}")
 
-    def send_ack(self, purchase_id):
+    def send_ack(self, purchase_id, contract):
         payload = {
             "type": "energy_transfer_request_acknowledgment",
             "purchase_id": purchase_id,
+            "contract": contract
         }
         message = json.dumps(payload)
         topic = f"energy_transfer_request_ack"

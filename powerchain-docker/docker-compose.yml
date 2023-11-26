@@ -29,6 +29,12 @@ services:
     ports:
       - 8545:8545
 
+  ganache2:
+    image: trufflesuite/ganache:v7.9.0
+    container_name: powerchain-ganache-2
+    ports:
+      - 18545:8545
+
   server:
     image: powerchain/server:latest
     build:

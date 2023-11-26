@@ -141,7 +141,7 @@ def get_login_user(username, password):
 
 
 def get_by_username(username):
-    result = __get_collection().find({"username": username})
+    result = __get_collection().find_one({"username": username})
     return from_json(result)
 
 
