@@ -42,13 +42,12 @@ def submit_request():
 
         seller = get_by_username(notification.seller_username)
 
-        # TODO create/upload smart contract
         abi = get_trade_contract_abi()
         bin = get_trade_contract_bin()
 
-        # TODO How to convert from electicity to ETH
         w3 = get_ethereum_connetion()
-        cost = w3.to_wei(5, 'ether')
+        # TODO How to convert from electicity to ETH
+        cost = w3.to_wei(101, 'ether')
         w3.eth.defaultAccount = seller.bcaddress
         seller_txn = { 'from': seller.bcaddress }
 

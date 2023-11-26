@@ -68,7 +68,6 @@ def __on_message(client, user_data, message):
     po = get_po_by_id(purchase_id)
     buyer = get_by_username(po.buyer_username)
 
-    # TODO execute contract
     w3 = get_ethereum_connetion()
     gas_price = 1000000
     buyer_txn = { 'from': buyer.bcaddress, 'gas': gas_price }

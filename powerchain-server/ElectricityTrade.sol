@@ -34,8 +34,8 @@ contract ElectricityTrade {
                 available: balances[msg.sender]
             });
 
-        balances[msg.sender] -= amount;
-        balances[seller] += amount;
+        balances[msg.sender] -= price;
+        balances[seller] += price;
     }
 
     error InsufficientBalance(uint requested, uint available);
