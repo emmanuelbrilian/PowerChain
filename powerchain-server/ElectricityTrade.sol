@@ -2,42 +2,40 @@
 
 pragma solidity >=0.8.2 <0.9.0;
 
-/**
- * @title Transfer
- * @dev Sell and buy electricity
- */
 contract ElectricityTrade {
-
-    uint256 amount;
+    uint256 energyQuantity;
     uint256 price;
-    address seller;
-    mapping(address => uint) public balances;
+    address payable seller;
+    address buyer;
+    mapping(address => uint256) balances;
 
-    /**
-     * @dev Sell an amount of electricity at the given price
-     * @param electricAmount that is sent to buyer
-     * @param electricPrice total price of electricAmount
-     */
-    constructor(uint256 electricAmount, uint256 electricPrice) {
-        seller = msg.sender;
-        amount = electricAmount;
-        price = electricPrice;
+    constructor(address _buyer, uint256 _energyQuantity, uint256 _price) {
+        seller = payable(msg.sender);
+        energyQuantity = _energyQuantity;
+        price = _price;
+        buyer = _buyer;
     }
 
-    /**
-     * @dev Buy the electricity
-     */
-    function buy() public {
-        if (price > balances[msg.sender])
+    function buy(uint256 amount) public {
+        if (msg.sender != buyer) {
+            revert Unauthorized();
+        }
+        if (amount < price) {
+          revert WrongPrice();
+        }
+        if (price > buyer.balance) {
             revert InsufficientBalance({
                 requested: price,
                 available: balances[msg.sender]
             });
+        }
 
-        balances[msg.sender] -= price;
-        balances[seller] += price;
+        payable(seller).transfer(price);
     }
 
     error InsufficientBalance(uint requested, uint available);
 
+    error Unauthorized();
+
+    error WrongPrice();
 }

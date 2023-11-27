@@ -75,7 +75,8 @@ def __on_message(client, user_data, message):
     abi = get_trade_contract_abi()
 
     trade = w3.eth.contract(address=contract, abi=abi)
-    buyer_txn_hash = trade.functions.buy().transact(buyer_txn)
+    cost = w3.to_wei(10, 'ether')
+    buyer_txn_hash = trade.functions.buy(cost).transact(buyer_txn)
     buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
 
     __LOG.info(f"Completed transaction: {buyer_txn_receipt}")
