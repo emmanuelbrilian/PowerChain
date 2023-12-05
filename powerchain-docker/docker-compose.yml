@@ -47,6 +47,10 @@ services:
       - MQTT_HOST=mosquitto
       - MONGO_HOST=mongo
       - ETHEREUM_HOST=ganache
+    depends_on:
+      - mosquitto
+      - mongo
+      - ganache
 
   peer1:
     image: powerchain/peer:latest
@@ -57,6 +61,8 @@ services:
     environment:
       - PEER_ID=651a0a96a95812bb9bdd9739
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer2:
     image: powerchain/peer:latest
@@ -67,6 +73,8 @@ services:
     environment:
       - PEER_ID=651a0abda95812bb9bdd973a
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer3:
     image: powerchain/peer:latest
@@ -77,6 +85,8 @@ services:
     environment:
       - PEER_ID=651a0acda95812bb9bdd973b
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer4:
     image: powerchain/peer:latest
@@ -87,6 +97,8 @@ services:
     environment:
       - PEER_ID=651a0adda95812bb9bdd973c
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer5:
     image: powerchain/peer:latest
@@ -97,6 +109,8 @@ services:
     environment:
       - PEER_ID=651a0aeca95812bb9bdd973d
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer6:
     image: powerchain/peer:latest
@@ -107,6 +121,8 @@ services:
     environment:
       - PEER_ID=651a0b03a95812bb9bdd973e
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer7:
     image: powerchain/peer:latest
@@ -117,6 +133,8 @@ services:
     environment:
       - PEER_ID=651a0b1ba95812bb9bdd973f
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer8:
     image: powerchain/peer:latest
@@ -127,6 +145,8 @@ services:
     environment:
       - PEER_ID=651a46f25d00604a3eb03d6e
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer9:
     image: powerchain/peer:latest
@@ -137,6 +157,8 @@ services:
     environment:
       - PEER_ID=peer9
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto
 
   peer10:
     image: powerchain/peer:latest
@@ -147,3 +169,5 @@ services:
     environment:
       - PEER_ID=peer10
       - MQTT_HOST=mosquitto
+    depends_on:
+      - mosquitto

@@ -69,14 +69,16 @@ def __on_message(client, user_data, message):
     buyer = get_by_username(po.buyer_username)
 
     w3 = get_ethereum_connetion()
-    gas_price = 1000000
-    buyer_txn = { 'from': buyer.bcaddress, 'gas': gas_price }
-
     abi = get_trade_contract_abi()
-
     trade = w3.eth.contract(address=contract, abi=abi)
-    cost = w3.to_wei(10, 'ether')
-    buyer_txn_hash = trade.functions.buy(cost).transact(buyer_txn)
+
+    w3.eth.defaultAccount = buyer.bcaddress
+    price = trade.functions.getPrice().call()
+    __LOG.info(f'Price is: {price}')
+
+    buyer_txn = { 'from': buyer.bcaddress, 'value': price, 'gas': 1000000 }
+
+    buyer_txn_hash = trade.functions.buy().transact(buyer_txn)
     buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
 
     __LOG.info(f"Completed transaction: {buyer_txn_receipt}")

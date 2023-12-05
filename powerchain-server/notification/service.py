@@ -47,13 +47,11 @@ def submit_request():
         bin = get_trade_contract_bin()
 
         w3 = get_ethereum_connetion()
-        # TODO How to convert from electicity to ETH
-        cost = w3.to_wei(notification.requested_energy * 10, 'ether')
         w3.eth.defaultAccount = seller.bcaddress
         seller_txn = { 'from': seller.bcaddress }
 
         trade = w3.eth.contract(abi=abi, bytecode=bin)
-        txn_hash = trade.constructor(buyer.bcaddress, notification.requested_energy, cost).transact(seller_txn)
+        txn_hash = trade.constructor(buyer.bcaddress, notification.requested_energy).transact(seller_txn)
         txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
         __LOG.info(f"Contract created: {txn_receipt}")
 
