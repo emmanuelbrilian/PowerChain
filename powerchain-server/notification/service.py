@@ -60,7 +60,8 @@ def submit_request():
             receiver=purchase_order.buyer_id,
             transfer_amount=notification.requested_energy,
             purchase_id=purchase_id,
-            contract=txn_receipt.contractAddress
+            contract=txn_receipt.contractAddress,
+            sender_username=notification.seller_username
         )
         send_energy_transfer_request(energy_transfer)
 

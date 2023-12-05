@@ -8,12 +8,12 @@ contract ElectricityTrade {
     mapping(address => uint256) balances;
 
     uint256 energyQuantity;
-    address payable seller;
-    address payable buyer;
+    address seller;
+    address buyer;
 
     constructor(address _buyer, uint256 _energyQuantity) {
-        seller = payable(msg.sender);
-        buyer = payable(_buyer);
+        seller = msg.sender;
+        buyer = _buyer;
         energyQuantity = _energyQuantity;
     }
 
@@ -25,17 +25,8 @@ contract ElectricityTrade {
         if (msg.sender != buyer) {
             revert Unauthorized();
         }
-        if (msg.value < energyQuantity * electricityPrice) {
-          revert WrongPrice();
-        }
-        if (balances[msg.sender] < energyQuantity * electricityPrice) {
-            revert InsufficientBalance({
-                requested: energyQuantity * electricityPrice,
-                available: balances[msg.sender]
-            });
-        }
-
-        payable(seller).transfer(energyQuantity * electricityPrice);
+        require(msg.value == getPrice(), 'Need to send exact amount of wei');
+        payable(seller).transfer(getPrice());
     }
 
     error InsufficientBalance(uint requested, uint available);

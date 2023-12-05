@@ -66,9 +66,6 @@ services:
 
   peer2:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-2
     environment:
       - PEER_ID=651a0abda95812bb9bdd973a
@@ -78,9 +75,6 @@ services:
 
   peer3:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-3
     environment:
       - PEER_ID=651a0acda95812bb9bdd973b
@@ -90,9 +84,6 @@ services:
 
   peer4:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-4
     environment:
       - PEER_ID=651a0adda95812bb9bdd973c
@@ -102,9 +93,6 @@ services:
 
   peer5:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-5
     environment:
       - PEER_ID=651a0aeca95812bb9bdd973d
@@ -114,9 +102,6 @@ services:
 
   peer6:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-6
     environment:
       - PEER_ID=651a0b03a95812bb9bdd973e
@@ -126,9 +111,6 @@ services:
 
   peer7:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-7
     environment:
       - PEER_ID=651a0b1ba95812bb9bdd973f
@@ -138,9 +120,6 @@ services:
 
   peer8:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-8
     environment:
       - PEER_ID=651a46f25d00604a3eb03d6e
@@ -150,9 +129,6 @@ services:
 
   peer9:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-9
     environment:
       - PEER_ID=peer9
@@ -162,9 +138,6 @@ services:
 
   peer10:
     image: powerchain/peer:latest
-    build:
-      context: ../powerchain-peers
-      dockerfile: Dockerfile
     container_name: powerchain-peer-10
     environment:
       - PEER_ID=peer10

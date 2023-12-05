@@ -15,12 +15,13 @@ class __Listener:
 
 class EnergyTransfer:
 
-    def __init__(self, sender, receiver, transfer_amount, purchase_id, contract) -> None:
+    def __init__(self, sender, receiver, transfer_amount, purchase_id, contract, sender_username) -> None:
         self.sender = sender
         self.receiver = receiver
         self.transfer_amount = transfer_amount
         self.purchase_id = purchase_id
         self.contract = contract
+        self.sender_username = sender_username
 
     def to_json(self):
         return {
@@ -29,7 +30,8 @@ class EnergyTransfer:
             'receiver': self.receiver,
             'transfer_amount': self.transfer_amount,
             'purchase_id': self.purchase_id,
-            'contract': self.contract
+            'contract': self.contract,
+            'sender_username': self.sender_username
         }
 
 def send_energy_transfer_request(energy_transfer: EnergyTransfer):
@@ -65,8 +67,10 @@ def __on_message(client, user_data, message):
     json_message = json.loads(decoded_message)
     purchase_id = json_message["purchase_id"]
     contract = json_message["contract"]
+    seller_username = json_message["seller_username"]
     po = get_po_by_id(purchase_id)
     buyer = get_by_username(po.buyer_username)
+    seller = get_by_username(seller_username)
 
     w3 = get_ethereum_connetion()
     abi = get_trade_contract_abi()
@@ -76,7 +80,7 @@ def __on_message(client, user_data, message):
     price = trade.functions.getPrice().call()
     __LOG.info(f'Price is: {price}')
 
-    buyer_txn = { 'from': buyer.bcaddress, 'value': price, 'gas': 1000000 }
+    buyer_txn = { 'from': buyer.bcaddress, 'to': seller.bcaddress, 'value': price, 'gas': 1000000 }
 
     buyer_txn_hash = trade.functions.buy().transact(buyer_txn)
     buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
