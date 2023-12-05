@@ -1,7 +1,7 @@
 import json
 import logging
 
-from user.model import get_by_username
+from user.model import get_by_username, save
 from purchase_order.model import get_po_by_id
 from util.mqtt_connection import MQTTConnection, get_mqtt_connection
 from util.ethereum_connection import get_ethereum_connetion, get_trade_contract_abi
@@ -86,3 +86,11 @@ def __on_message(client, user_data, message):
     buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
 
     __LOG.info(f"Completed transaction: {buyer_txn_receipt}")
+
+    seller.current_energy -= po.requested_amount
+    seller.energy_purchased += po.requested_amount
+    save(seller)
+
+    buyer.current_energy += po.requested_amount
+    buyer.energy_sold += po.requested_amount
+    save(buyer)
