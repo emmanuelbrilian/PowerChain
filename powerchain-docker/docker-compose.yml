@@ -30,7 +30,7 @@ services:
       - 8545:8545
 
   server:
-    image: powerchain/server:latest
+    image: dkakunsi/powerchain-server:latest
     build:
       context: ../powerchain-server
       dockerfile: Dockerfile
@@ -47,94 +47,94 @@ services:
       - ganache
 
   peer1:
-    image: powerchain/peer:latest
+    image: dkakunsi/powerchain-peer:latest
     build:
       context: ../powerchain-peers
       dockerfile: Dockerfile
     container_name: powerchain-peer-1
     environment:
-      - PEER_ID=651a0a96a95812bb9bdd9739
+      - PEER_ID=658e650fc02267fe16d36f8d
       - MQTT_HOST=mosquitto
     depends_on:
       - mosquitto
 
   peer2:
-    image: powerchain/peer:latest
+    image: dkakunsi/powerchain-peer:latest
     container_name: powerchain-peer-2
     environment:
-      - PEER_ID=651a0abda95812bb9bdd973a
+      - PEER_ID=658e6535c02267fe16d36f8e
       - MQTT_HOST=mosquitto
     depends_on:
       - mosquitto
 
   peer3:
-    image: powerchain/peer:latest
+    image: dkakunsi/powerchain-peer:latest
     container_name: powerchain-peer-3
     environment:
-      - PEER_ID=651a0acda95812bb9bdd973b
+      - PEER_ID=658e655ec02267fe16d36f8f
       - MQTT_HOST=mosquitto
     depends_on:
       - mosquitto
 
-  peer4:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-4
-    environment:
-      - PEER_ID=651a0adda95812bb9bdd973c
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer4:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-4
+  #   environment:
+  #     - PEER_ID=651a0adda95812bb9bdd973c
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer5:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-5
-    environment:
-      - PEER_ID=651a0aeca95812bb9bdd973d
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer5:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-5
+  #   environment:
+  #     - PEER_ID=651a0aeca95812bb9bdd973d
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer6:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-6
-    environment:
-      - PEER_ID=651a0b03a95812bb9bdd973e
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer6:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-6
+  #   environment:
+  #     - PEER_ID=651a0b03a95812bb9bdd973e
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer7:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-7
-    environment:
-      - PEER_ID=651a0b1ba95812bb9bdd973f
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer7:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-7
+  #   environment:
+  #     - PEER_ID=651a0b1ba95812bb9bdd973f
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer8:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-8
-    environment:
-      - PEER_ID=651a46f25d00604a3eb03d6e
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer8:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-8
+  #   environment:
+  #     - PEER_ID=651a46f25d00604a3eb03d6e
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer9:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-9
-    environment:
-      - PEER_ID=peer9
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer9:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-9
+  #   environment:
+  #     - PEER_ID=peer9
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
 
-  peer10:
-    image: powerchain/peer:latest
-    container_name: powerchain-peer-10
-    environment:
-      - PEER_ID=peer10
-      - MQTT_HOST=mosquitto
-    depends_on:
-      - mosquitto
+  # peer10:
+  #   image: dkakunsi/powerchain-peer:latest
+  #   container_name: powerchain-peer-10
+  #   environment:
+  #     - PEER_ID=peer10
+  #     - MQTT_HOST=mosquitto
+  #   depends_on:
+  #     - mosquitto
