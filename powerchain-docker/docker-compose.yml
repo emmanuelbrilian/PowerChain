@@ -55,6 +55,9 @@ services:
     environment:
       - PEER_ID=658e650fc02267fe16d36f8d
       - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=2.002
+    volumes:
+      - ./file/peer1.txt:/opt/powerchain/peer1.txt
     depends_on:
       - mosquitto
 
@@ -64,6 +67,7 @@ services:
     environment:
       - PEER_ID=658e6535c02267fe16d36f8e
       - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
     depends_on:
       - mosquitto
 

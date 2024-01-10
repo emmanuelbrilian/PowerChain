@@ -12,6 +12,7 @@ __LOG = logging.getLogger("App")
 
 peer_id = sys.argv[1]
 mqtt_host = sys.argv[2]
+generated_energy = sys.argv[3]
 receiver = None
 
 if len(sys.argv) >= 4:
@@ -34,6 +35,11 @@ def receiver_func():
 
 receiver_thread = Thread(target=receiver_func)
 receiver_thread.start()
+
+## loop per menit
+# beban = baca file beban
+# kirim ke server via peers.py send_energy_update(peer_id, beban, beban + generated_energy)
+
 
 # If peer is sender
 # Only for testing

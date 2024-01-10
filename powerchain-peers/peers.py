@@ -42,6 +42,9 @@ class Peer:
             self.__mqtt_client.on_message = self.__on_message
             self.__LOG.info(f"Listening to {topic}")
 
+    # def send_energy_update(peer_id, beban, generated)
+
+    # contoh
     def send_ack(self, purchase_id, contract, seller_username):
         payload = {
             "type": "energy_transfer_request_acknowledgment",

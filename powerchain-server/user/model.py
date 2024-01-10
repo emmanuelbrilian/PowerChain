@@ -144,6 +144,7 @@ def get_by_username(username):
     result = __get_collection().find_one({"username": username})
     return from_json(result)
 
+# get by user_id
 
 def get_all():
     results = __get_collection().find()
@@ -168,3 +169,10 @@ def get_ethereum_account():
         if not __is_bcaddress_used(ethereum_account):
             return ethereum_account
     return None
+
+# def init_ack_listener():
+
+# def __on_message(client, user_data, message):
+    # load data user from DB by peer_id
+    # calculate current_energy = current_energy + generated - used
+    # save updated user to db
