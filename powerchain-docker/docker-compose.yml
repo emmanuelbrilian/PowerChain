@@ -53,11 +53,11 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-1
     environment:
-      - PEER_ID=658e650fc02267fe16d36f8d
+      - PEER_ID=6576c05dc3d48dcb6c9d1f8f
       - MQTT_HOST=mosquitto
       - GENERATED_ENERGY=2.002
     volumes:
-      - ./file/peer1.txt:/opt/powerchain/peer1.txt
+      - ./file/peer1.txt:/opt/powerchain/beban.txt
     depends_on:
       - mosquitto
 
@@ -65,7 +65,7 @@ services:
     image: dkakunsi/powerchain-peer:latest
     container_name: powerchain-peer-2
     environment:
-      - PEER_ID=658e6535c02267fe16d36f8e
+      - PEER_ID=6576c042c3d48dcb6c9d1f8e
       - MQTT_HOST=mosquitto
       - GENERATED_ENERGY=0
     depends_on:

@@ -40,6 +40,33 @@ receiver_thread.start()
 # beban = baca file beban
 # kirim ke server via peers.py send_energy_update(peer_id, beban, beban + generated_energy)
 
+def main_loop():
+    for _ in range(10):  # loop per minute
+        try:
+            with open("beban.txt", "r") as file:
+                current_load_str = file.readlines()
+                for line in current_load_str:
+                    
+                    __LOG.info(f"Read from file: Beban content: {line}")
+                    current_load = float(line)
+                    __LOG.info(f"current_load: {current_load}")
+
+                    peer.send_energy_update(peer_id, current_load, float(generated_energy))
+                    
+                    time.sleep(60)
+        except FileNotFoundError:
+            __LOG.warning("Beban file not found.")
+        except ValueError:
+            __LOG.warning("Invalid content in beban file.")
+
+        
+
+    
+sender_thread = Thread(target= main_loop)
+sender_thread.start()
+
+main_loop()
+
 
 # If peer is sender
 # Only for testing
@@ -60,3 +87,4 @@ if receiver != None:
 
     sender_thread = Thread(target=sender_func)
     sender_thread.start()
+
