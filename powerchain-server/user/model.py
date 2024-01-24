@@ -3,9 +3,15 @@ import logging
 from bson import ObjectId
 from passlib.hash import sha256_crypt
 from geopy.geocoders import Nominatim
-
+from util.mqtt_connection import MQTTConnection, get_mqtt_connection
 from util.ethereum_connection import get_ethereum_connetion
 from util.db_connection import get_collection
+
+import json
+
+class __Listener:
+    is_listening = False
+
 
 class User:
     def __init__(
@@ -176,3 +182,53 @@ def get_ethereum_account():
     # load data user from DB by peer_id
     # calculate current_energy = current_energy + generated - used
     # save updated user to db
+def init_energyupdate_listener():
+    mqtt_client = get_mqtt_connection()
+
+    if not __Listener.is_listening:
+        __Listener.is_listening = True
+        _energy_update = "energy_update"  
+        mqtt_client.subscribe(_energy_update)
+        mqtt_client.on_message = __on_message
+        __LOG.info(f"Listening to {_energy_update}")
+
+
+
+def get_user_by_peer_id(peer_id):
+   
+    users_collection = get_collection("users")
+    user = users_collection.find_one({"peer_id": peer_id})
+
+    return user
+
+def __on_message(client, user_data, message):
+    decoded_message = str(message.payload.decode("utf-8"))
+    __LOG.info(f"Receiving message from topic '{message.topic}' with payload '{decoded_message}'")
+
+    try:
+        
+        message_data = json.loads(decoded_message)
+
+        peer_id = message_data.get("peer_id")
+        generated_energy = message_data.get("generated_energy", 0)
+        used_energy = message_data.get("used_energy", 0)
+
+        user = get_user_by_peer_id(peer_id)
+
+        if user:
+            # Calculate current_energy = current_energy + generated - used
+            user.current_energy += (generated_energy - used_energy)
+
+            # Save updated user to the database
+            save(user)
+            __LOG.info(f"User {user.username}: current_energy updated to {user.current_energy}")
+
+    except json.JSONDecodeError:
+        __LOG.error("Failed to decode JSON payload.")
+
+
+
+
+
+
+    

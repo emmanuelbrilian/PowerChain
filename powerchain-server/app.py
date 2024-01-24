@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 from threading import Thread
 
 from flask import Flask, render_template
@@ -9,6 +10,7 @@ from util.ethereum_connection import init_ethereum
 from util.db_connection import init_mongo
 from util.mqtt_connection import get_mqtt_connection, init_mqtt
 from energy_transfer.model import init_ack_listener
+from user.model import init_energyupdate_listener
 from purchase_order.service import purchase_order_service
 from user.service import user_service
 from notification.service import notification_service
@@ -31,17 +33,17 @@ mqtt_host = "localhost"
 if len(sys.argv) >= 4:
     mqtt_host = sys.argv[3]
 
-mqtt_client_id = "powerchain-server-1"
+mqtt_client_id = "powerchain-server-2"
 if len(sys.argv) >= 5:
     mqtt_client_id = sys.argv[4]
 
 init_mongo(mongo_host)
 init_ethereum(ethereum_host)
-
+init_mqtt(mqtt_host, mqtt_client_id)
 
 def receiver_func():
     try:
-        init_mqtt(mqtt_host, mqtt_client_id)
+        
         while True:
             init_ack_listener()
     except KeyboardInterrupt:
@@ -52,16 +54,21 @@ def receiver_func():
 receiver_thread = Thread(target=receiver_func)
 receiver_thread.start()
 
-# TODO add available electricity updater from SQL db
-# def update_peer_available_electricity():
-#     while True:
-#       # connect to sql db
-#       # read available electricity data by id from sql db
-#       # update available electricity data in mongodb user collection
-#       # time.sleep(600) # every 10 minutes
-#
-# electricity_updater = Thread(target=update_peer_available_electricity)
-# electricity_updater.start()
+time.sleep(3)
+def receiver_energyupdate():
+    try:
+        
+        while True:
+            init_energyupdate_listener()
+    except KeyboardInterrupt:
+        get_mqtt_connection().loop_stop()
+        __LOG.info(f"Stopping mqtt connection")
+
+
+receiver_energyupdate_thread = Thread(target=receiver_energyupdate)
+receiver_energyupdate_thread.start()
+
+
 
 app = Flask(__name__)
 app.secret_key = "secret123"

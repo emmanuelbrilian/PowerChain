@@ -11,6 +11,7 @@ To build the server & peer project:
 
 To run the projects for the first time:
 `docker compose up -d server peer1 peer2 peer3 [PEER_N]`
+`docker compose up -d server peer1 peer2 peer3 peer4 peer5 peer6 peer7 peer8 peer9 peer10`
 
 To run the projects:
-`docker compose start server peer1 peer2 peer3 [PEER_N]`
+`docker compose start server peer1 peer2 peer3 peer4 peer5 peer6 peer7 peer8 peer9 peer10`
