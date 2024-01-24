@@ -154,6 +154,9 @@ def get_by_username(username):
 
 
 # get by user_id
+def get_user_by_peer_id(peer_id):
+    result = __get_collection().find_one({"_id": ObjectId(peer_id)})
+    return from_json(result)
 
 
 def get_all():
@@ -191,12 +194,6 @@ def init_energy_update_listener():
         mqtt_client.on_message = __on_message
         __LOG.info(f"Listening to {_energy_update}")
 
-
-def get_user_by_peer_id(peer_id):
-    users_collection = get_collection("users")
-    user = users_collection.find_one({"peer_id": peer_id})
-
-    return user
 
 
 def __on_message(client, user_data, message):
