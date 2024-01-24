@@ -1,6 +1,5 @@
 import logging
 import sys
-import time
 from threading import Thread
 
 from flask import Flask, render_template
@@ -9,9 +8,9 @@ from flask_wtf.csrf import CSRFProtect
 from util.ethereum_connection import init_ethereum
 from util.db_connection import init_mongo
 from util.mqtt_connection import get_mqtt_connection, init_mqtt
-from energy_transfer.model import init_ack_listener
-from user.model import init_energyupdate_listener
+from energy_transfer.model import init_energy_transfer_ack_listener
 from purchase_order.service import purchase_order_service
+from user.model import init_energy_update_listener
 from user.service import user_service
 from notification.service import notification_service
 
@@ -26,7 +25,7 @@ if len(sys.argv) >= 2:
     mongo_host = sys.argv[1]
 
 ethereum_host = "localhost"
-if (len(sys.argv) >= 3):
+if len(sys.argv) >= 3:
     ethereum_host = sys.argv[2]
 
 mqtt_host = "localhost"
@@ -41,33 +40,34 @@ init_mongo(mongo_host)
 init_ethereum(ethereum_host)
 init_mqtt(mqtt_host, mqtt_client_id)
 
-def receiver_func():
+# get connection to initialize the client object
+get_mqtt_connection()
+
+
+def energy_transfer_ack_receiver_func():
     try:
-        
         while True:
-            init_ack_listener()
+            init_energy_transfer_ack_listener()
     except KeyboardInterrupt:
         get_mqtt_connection().loop_stop()
         __LOG.info(f"Stopping mqtt connection")
 
 
-receiver_thread = Thread(target=receiver_func)
-receiver_thread.start()
+energy_transfer_ack_receiver_thread = Thread(target=energy_transfer_ack_receiver_func)
+energy_transfer_ack_receiver_thread.start()
 
-time.sleep(3)
-def receiver_energyupdate():
+
+def energy_update_receiver_func():
     try:
-        
         while True:
-            init_energyupdate_listener()
+            init_energy_update_listener()
     except KeyboardInterrupt:
         get_mqtt_connection().loop_stop()
         __LOG.info(f"Stopping mqtt connection")
 
 
-receiver_energyupdate_thread = Thread(target=receiver_energyupdate)
-receiver_energyupdate_thread.start()
-
+energy_update_receiver_thread = Thread(target=energy_update_receiver_func)
+energy_update_receiver_thread.start()
 
 
 app = Flask(__name__)

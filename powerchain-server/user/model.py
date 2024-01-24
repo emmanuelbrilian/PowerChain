@@ -1,13 +1,14 @@
 import logging
+import json
 
 from bson import ObjectId
 from passlib.hash import sha256_crypt
 from geopy.geocoders import Nominatim
-from util.mqtt_connection import MQTTConnection, get_mqtt_connection
+
+from util.mqtt_connection import get_mqtt_connection
 from util.ethereum_connection import get_ethereum_connetion
 from util.db_connection import get_collection
 
-import json
 
 class __Listener:
     is_listening = False
@@ -59,6 +60,7 @@ class User:
 __LOG = logging.getLogger("UserModel")
 
 __USER_COLLECTION_NAME = "users"
+
 
 def __get_collection():
     return get_collection(__USER_COLLECTION_NAME)
@@ -150,7 +152,9 @@ def get_by_username(username):
     result = __get_collection().find_one({"username": username})
     return from_json(result)
 
+
 # get by user_id
+
 
 def get_all():
     results = __get_collection().find()
@@ -176,37 +180,32 @@ def get_ethereum_account():
             return ethereum_account
     return None
 
-# def init_ack_listener():
 
-# def __on_message(client, user_data, message):
-    # load data user from DB by peer_id
-    # calculate current_energy = current_energy + generated - used
-    # save updated user to db
-def init_energyupdate_listener():
+def init_energy_update_listener():
     mqtt_client = get_mqtt_connection()
 
     if not __Listener.is_listening:
         __Listener.is_listening = True
-        _energy_update = "energy_update"  
+        _energy_update = "energy_update"
         mqtt_client.subscribe(_energy_update)
         mqtt_client.on_message = __on_message
         __LOG.info(f"Listening to {_energy_update}")
 
 
-
 def get_user_by_peer_id(peer_id):
-   
     users_collection = get_collection("users")
     user = users_collection.find_one({"peer_id": peer_id})
 
     return user
 
+
 def __on_message(client, user_data, message):
     decoded_message = str(message.payload.decode("utf-8"))
-    __LOG.info(f"Receiving message from topic '{message.topic}' with payload '{decoded_message}'")
+    __LOG.info(
+        f"Receiving message from topic '{message.topic}' with payload '{decoded_message}'"
+    )
 
     try:
-        
         message_data = json.loads(decoded_message)
 
         peer_id = message_data.get("peer_id")
@@ -217,18 +216,13 @@ def __on_message(client, user_data, message):
 
         if user:
             # Calculate current_energy = current_energy + generated - used
-            user.current_energy += (generated_energy - used_energy)
+            user.current_energy += generated_energy - used_energy
 
             # Save updated user to the database
             save(user)
-            __LOG.info(f"User {user.username}: current_energy updated to {user.current_energy}")
+            __LOG.info(
+                f"User {user.username}: current_energy updated to {user.current_energy}"
+            )
 
     except json.JSONDecodeError:
         __LOG.error("Failed to decode JSON payload.")
-
-
-
-
-
-
-    

@@ -10,12 +10,15 @@ __LOG = logging.getLogger("EnergyTransferModel")
 
 __transfer_acknowledge_topic = "energy_transfer_request_ack"
 
+
 class __Listener:
     is_listening = False
 
-class EnergyTransfer:
 
-    def __init__(self, sender, receiver, transfer_amount, purchase_id, contract, sender_username) -> None:
+class EnergyTransfer:
+    def __init__(
+        self, sender, receiver, transfer_amount, purchase_id, contract, sender_username
+    ) -> None:
         self.sender = sender
         self.receiver = receiver
         self.transfer_amount = transfer_amount
@@ -25,14 +28,15 @@ class EnergyTransfer:
 
     def to_json(self):
         return {
-            'type': 'energy_transfer_request',
-            'sender': self.sender,
-            'receiver': self.receiver,
-            'transfer_amount': self.transfer_amount,
-            'purchase_id': self.purchase_id,
-            'contract': self.contract,
-            'sender_username': self.sender_username
+            "type": "energy_transfer_request",
+            "sender": self.sender,
+            "receiver": self.receiver,
+            "transfer_amount": self.transfer_amount,
+            "purchase_id": self.purchase_id,
+            "contract": self.contract,
+            "sender_username": self.sender_username,
         }
+
 
 def send_energy_transfer_request(energy_transfer: EnergyTransfer):
     message = json.dumps(energy_transfer.to_json())
@@ -40,16 +44,12 @@ def send_energy_transfer_request(energy_transfer: EnergyTransfer):
     result = get_mqtt_connection().publish(topic, message)
     status = result[0]
     if status != 0:
-        __LOG.error(
-            f"Failed publishing to topic {topic}, status: {status}"
-        )
+        __LOG.error(f"Failed publishing to topic {topic}, status: {status}")
     else:
-        __LOG.info(
-            f"Message {message} was published into topic '{topic}'"
-        )
+        __LOG.info(f"Message {message} was published into topic '{topic}'")
 
 
-def init_ack_listener():
+def init_energy_transfer_ack_listener():
     mqtt_client = get_mqtt_connection()
 
     if not __Listener.is_listening:
@@ -57,6 +57,7 @@ def init_ack_listener():
         mqtt_client.subscribe(__transfer_acknowledge_topic)
         mqtt_client.on_message = __on_message
         __LOG.info(f"Listening to {__transfer_acknowledge_topic}")
+
 
 def __on_message(client, user_data, message):
     decoded_message = str(message.payload.decode("utf-8"))
@@ -78,9 +79,14 @@ def __on_message(client, user_data, message):
 
     w3.eth.defaultAccount = buyer.bcaddress
     price = trade.functions.getPrice().call()
-    __LOG.info(f'Price is: {price}')
+    __LOG.info(f"Price is: {price}")
 
-    buyer_txn = { 'from': buyer.bcaddress, 'to': seller.bcaddress, 'value': price, 'gas': 1000000 }
+    buyer_txn = {
+        "from": buyer.bcaddress,
+        "to": seller.bcaddress,
+        "value": price,
+        "gas": 1000000,
+    }
 
     buyer_txn_hash = trade.functions.buy().transact(buyer_txn)
     buyer_txn_receipt = w3.eth.wait_for_transaction_receipt(buyer_txn_hash)
