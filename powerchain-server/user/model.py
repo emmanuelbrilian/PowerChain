@@ -195,7 +195,6 @@ def init_energy_update_listener():
         __LOG.info(f"Listening to {_energy_update}")
 
 
-
 def __on_message(client, user_data, message):
     decoded_message = str(message.payload.decode("utf-8"))
     __LOG.info(
@@ -205,17 +204,14 @@ def __on_message(client, user_data, message):
     try:
         message_data = json.loads(decoded_message)
 
-        peer_id = message_data.get("peer_id")
-        generated_energy = message_data.get("generated_energy", 0)
-        used_energy = message_data.get("used_energy", 0)
+        peer_id = message_data["peer_id"]
+        used_energy = message_data["current_load"]
+        generated_energy = message_data["total_load"]
 
         user = get_user_by_peer_id(peer_id)
 
         if user:
-            # Calculate current_energy = current_energy + generated - used
             user.current_energy += generated_energy - used_energy
-
-            # Save updated user to the database
             save(user)
             __LOG.info(
                 f"User {user.username}: current_energy updated to {user.current_energy}"
