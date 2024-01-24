@@ -13,7 +13,7 @@ from wtforms import (
 from passlib.hash import sha256_crypt
 
 
-from user.model import User, get_all, get_ethereum_account, get_ethereum_balance, get_ethereum_used_balance, get_login_user, is_email_registered, save
+from user.model import User, get_user_by_peer_id, get_all, get_ethereum_account, get_ethereum_balance, get_ethereum_used_balance, get_login_user, is_email_registered, save
 from util.session import get_active_user, is_logged_in, set_active_user
 
 __LOGGER = logging.getLogger("UserService")
@@ -115,6 +115,7 @@ def open_peers_page():
 @is_logged_in
 def open_dashboard_page():
     user = get_active_user()
+    user = get_user_by_peer_id(user.id)
     return render_template(
         "dashboard.html",
         user=user,
