@@ -59,13 +59,13 @@ class Peer:
         else:
             self.__LOG.info(f"Energy update sent: Peer_ID={peer_id}, Current Load={current_load}, Total Load={current_load + generated_energy}")
 
-    def init_receive(self):
-        if not self.__is_listening:
-            self.__is_listening = True
-            topic = f"{self.id}_energy_update"
-            self.__mqtt_client.subscribe(topic)
-            self.__mqtt_client.on_message = self.__on_message
-            self.__LOG.info(f"Listening to {topic}") 
+    # def init_receive(self):
+    #     if not self.__is_listening:
+    #         self.__is_listening = True
+    #         topic = f"{self.id}_energy_update"
+    #         self.__mqtt_client.subscribe(topic)
+    #         self.__mqtt_client.on_message = self.__on_message
+    #         self.__LOG.info(f"Listening to {topic}") 
 
     # contoh
     def send_ack(self, purchase_id, contract, seller_username):

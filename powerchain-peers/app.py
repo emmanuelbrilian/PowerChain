@@ -15,8 +15,8 @@ mqtt_host = sys.argv[2]
 generated_energy = sys.argv[3]
 receiver = None
 
-if len(sys.argv) >= 4:
-    receiver = sys.argv[3]
+if len(sys.argv) >= 5:
+    receiver = sys.argv[4]
 
 __LOG.info(f"Starting {peer_id}")
 
@@ -65,7 +65,7 @@ def main_loop():
 sender_thread = Thread(target= main_loop)
 sender_thread.start()
 
-main_loop()
+#main_loop()
 
 
 # If peer is sender

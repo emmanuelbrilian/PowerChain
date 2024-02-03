@@ -53,7 +53,7 @@ services:
       dockerfile: Dockerfile
     container_name: powerchain-peer-1
     environment:
-      - PEER_ID=6576c05dc3d48dcb6c9d1f8f
+      - PEER_ID=65baffd14f7816879c0a4273
       - MQTT_HOST=mosquitto
       - GENERATED_ENERGY=2.002
     volumes:
@@ -65,9 +65,11 @@ services:
     image: dkakunsi/powerchain-peer:latest
     container_name: powerchain-peer-2
     environment:
-      - PEER_ID=6576c042c3d48dcb6c9d1f8e
+      - PEER_ID=65bb00104f7816879c0a4274
       - MQTT_HOST=mosquitto
       - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer2.txt:/opt/powerchain/beban.txt
     depends_on:
       - mosquitto
 
@@ -75,70 +77,94 @@ services:
     image: dkakunsi/powerchain-peer:latest
     container_name: powerchain-peer-3
     environment:
-      - PEER_ID=658e655ec02267fe16d36f8f
+      - PEER_ID=65bb005a4f7816879c0a4275
       - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer3.txt:/opt/powerchain/beban.txt
     depends_on:
       - mosquitto
 
-  # peer4:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-4
-  #   environment:
-  #     - PEER_ID=651a0adda95812bb9bdd973c
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer4:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-4
+    environment:
+      - PEER_ID=65bb00be4f7816879c0a4276
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer4.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer5:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-5
-  #   environment:
-  #     - PEER_ID=651a0aeca95812bb9bdd973d
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer5:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-5
+    environment:
+      - PEER_ID=65bb00d94f7816879c0a4277
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer5.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer6:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-6
-  #   environment:
-  #     - PEER_ID=651a0b03a95812bb9bdd973e
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer6:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-6
+    environment:
+      - PEER_ID=65bb00fe4f7816879c0a4278
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=2.962962963
+    volumes:
+      - ./file/peer6.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer7:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-7
-  #   environment:
-  #     - PEER_ID=651a0b1ba95812bb9bdd973f
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer7:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-7
+    environment:
+      - PEER_ID=65bb01314f7816879c0a4279
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer7.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer8:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-8
-  #   environment:
-  #     - PEER_ID=651a46f25d00604a3eb03d6e
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer8:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-8
+    environment:
+      - PEER_ID=65bb01544f7816879c0a427a
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0.202222222
+    volumes:
+      - ./file/peer8.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer9:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-9
-  #   environment:
-  #     - PEER_ID=peer9
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer9:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-9
+    environment:
+      - PEER_ID=65bb017c4f7816879c0a427b
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=0
+    volumes:
+      - ./file/peer9.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
 
-  # peer10:
-  #   image: dkakunsi/powerchain-peer:latest
-  #   container_name: powerchain-peer-10
-  #   environment:
-  #     - PEER_ID=peer10
-  #     - MQTT_HOST=mosquitto
-  #   depends_on:
-  #     - mosquitto
+  peer10:
+    image: dkakunsi/powerchain-peer:latest
+    container_name: powerchain-peer-10
+    environment:
+      - PEER_ID=65bb01994f7816879c0a427c
+      - MQTT_HOST=mosquitto
+      - GENERATED_ENERGY=2.592592593
+    volumes:
+      - ./file/peer10.txt:/opt/powerchain/beban.txt
+    depends_on:
+      - mosquitto
