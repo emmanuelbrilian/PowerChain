@@ -6,28 +6,27 @@ import paho.mqtt.client as mqtt
 __LOG = logging.getLogger("MqttConnection")
 
 class MQTTConnection:
-    client: mqtt.Client = None
-    is_connected = False
+    clients = {}
     mqtt_host = "localhost"
     client_id = "powerchain_server_1"
     mqtt_port = 1883
 
 def init_mqtt(mqtt_host, client_id):
     MQTTConnection.mqtt_host = mqtt_host
-    MQTTConnection.is_connected = False
     MQTTConnection.client_id = client_id
 
-def get_mqtt_connection():
-    if not MQTTConnection.is_connected:
-        MQTTConnection.client = __connect_mqtt()
-    return MQTTConnection.client
+def get_mqtt_connection(connection_id):
+    if MQTTConnection.clients.get(connection_id) == None:
+        new_client = __connect_mqtt(f"{MQTTConnection.client_id}.{connection_id}")
+        MQTTConnection.clients[connection_id] = new_client
+    return MQTTConnection.clients.get(connection_id)
 
 
-def __connect_mqtt():
-    __LOG.info(f"Connecting to broker at: {MQTTConnection.mqtt_host}:{MQTTConnection.mqtt_port}")
+def __connect_mqtt(client_id):
+    __LOG.info(f"Connecting to broker at: {MQTTConnection.mqtt_host}:{MQTTConnection.mqtt_port} for client {client_id}")
 
     try:
-        client = mqtt.Client(MQTTConnection.client_id)
+        client = mqtt.Client(client_id)
         client.on_connect = __on_connect
         client.on_disconnect = __on_disconnect
         client.username_pw_set(username="admin", password="powerchain")

@@ -3,7 +3,7 @@ import logging
 
 from user.model import get_by_username, save
 from purchase_order.model import get_po_by_id
-from util.mqtt_connection import MQTTConnection, get_mqtt_connection
+from util.mqtt_connection import get_mqtt_connection
 from util.ethereum_connection import get_ethereum_connetion, get_trade_contract_abi
 
 __LOG = logging.getLogger("EnergyTransferModel")
@@ -41,7 +41,7 @@ class EnergyTransfer:
 def send_energy_transfer_request(energy_transfer: EnergyTransfer):
     message = json.dumps(energy_transfer.to_json())
     topic = f"{energy_transfer.sender}_energy_transfer_request"
-    result = get_mqtt_connection().publish(topic, message)
+    result = get_mqtt_connection("transfer_request").publish(topic, message)
     status = result[0]
     if status != 0:
         __LOG.error(f"Failed publishing to topic {topic}, status: {status}")
@@ -50,7 +50,7 @@ def send_energy_transfer_request(energy_transfer: EnergyTransfer):
 
 
 def init_energy_transfer_ack_listener():
-    mqtt_client = get_mqtt_connection()
+    mqtt_client = get_mqtt_connection("transfer_ack")
 
     if not __Listener.is_listening:
         __Listener.is_listening = True

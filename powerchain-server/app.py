@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 
 from util.ethereum_connection import init_ethereum
 from util.db_connection import init_mongo
-from util.mqtt_connection import get_mqtt_connection, init_mqtt
+from util.mqtt_connection import init_mqtt
 from energy_transfer.model import init_energy_transfer_ack_listener
 from purchase_order.service import purchase_order_service
 from user.model import init_energy_update_listener
@@ -40,16 +40,12 @@ init_mongo(mongo_host)
 init_ethereum(ethereum_host)
 init_mqtt(mqtt_host, mqtt_client_id)
 
-# get connection to initialize the client object
-get_mqtt_connection()
-
 
 def energy_transfer_ack_receiver_func():
     try:
         while True:
             init_energy_transfer_ack_listener()
     except KeyboardInterrupt:
-        get_mqtt_connection().loop_stop()
         __LOG.info(f"Stopping mqtt connection")
 
 
@@ -62,7 +58,6 @@ def energy_update_receiver_func():
         while True:
             init_energy_update_listener()
     except KeyboardInterrupt:
-        get_mqtt_connection().loop_stop()
         __LOG.info(f"Stopping mqtt connection")
 
 

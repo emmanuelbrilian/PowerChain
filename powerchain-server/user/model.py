@@ -185,7 +185,7 @@ def get_ethereum_account():
 
 
 def init_energy_update_listener():
-    mqtt_client = get_mqtt_connection()
+    mqtt_client = get_mqtt_connection("energy_update")
 
     if not __Listener.is_listening:
         __Listener.is_listening = True
