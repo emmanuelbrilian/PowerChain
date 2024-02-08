@@ -6,6 +6,39 @@ from geopy.distance import geodesic
 from util.db_connection import get_collection
 
 
+class Candidate:
+    def __init__(
+        self,
+        seller_id,
+        seller_username,
+        distance,
+        available_energy,
+        requested_energy=0,
+        status=None,
+    ) -> None:
+        self.seller_id = seller_id
+        self.seller_username = seller_username
+        self.distance = distance
+        self.available_energy = available_energy
+        self.requested_energy = requested_energy
+        self.status = status
+
+    def decline(self):
+        self.status = "DECLINED"
+
+    def approve(self):
+        self.status = "APPROVED"
+
+    def to_json(self):
+        return {
+            "seller_id": self.seller_id,
+            "seller_username": self.seller_username,
+            "distance": self.distance,
+            "available_energy": self.available_energy,
+            "requested_energy": self.requested_energy,
+            "status": self.status,
+        }
+
 class PurchaseOrder:
     __LOG = logging.getLogger("PurchaseOrder")
     
@@ -115,9 +148,10 @@ class PurchaseOrder:
         candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
         candidate.decline()
 
-    def approve_candidate(self, seller_id):
-        candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
+    def approve_candidate(self, seller_id) -> Candidate:
+        candidate: Candidate = next(filter(lambda c: c.seller_id == seller_id, self.candidates))
         candidate.approve()
+        return candidate
 
     def to_json(self):
         return {
@@ -131,39 +165,6 @@ class PurchaseOrder:
             "candidates": to_candidates_json(self.candidates),
         }
 
-
-class Candidate:
-    def __init__(
-        self,
-        seller_id,
-        seller_username,
-        distance,
-        available_energy,
-        requested_energy=0,
-        status=None,
-    ) -> None:
-        self.seller_id = seller_id
-        self.seller_username = seller_username
-        self.distance = distance
-        self.available_energy = available_energy
-        self.requested_energy = requested_energy
-        self.status = status
-
-    def decline(self):
-        self.status = "DECLINED"
-
-    def approve(self):
-        self.status = "APPROVED"
-
-    def to_json(self):
-        return {
-            "seller_id": self.seller_id,
-            "seller_username": self.seller_username,
-            "distance": self.distance,
-            "available_energy": self.available_energy,
-            "requested_energy": self.requested_energy,
-            "status": self.status,
-        }
 
 
 __purchase_order_collection_name = "purchase_orders"

@@ -1,8 +1,8 @@
 import json
 import logging
 
-from user.model import get_by_username, save
-from purchase_order.model import get_po_by_id
+from user.model import get_by_username, save as save_user
+from purchase_order.model import get_po_by_id, save_po
 from util.mqtt_connection import get_mqtt_connection
 from util.ethereum_connection import get_ethereum_connetion, get_trade_contract_abi
 
@@ -73,6 +73,8 @@ def __on_message(client, user_data, message):
     buyer = get_by_username(po.buyer_username)
     seller = get_by_username(seller_username)
 
+    po_candidate = po.approve_candidate(seller.id)
+
     w3 = get_ethereum_connetion()
     abi = get_trade_contract_abi()
     trade = w3.eth.contract(address=contract, abi=abi)
@@ -93,10 +95,12 @@ def __on_message(client, user_data, message):
 
     __LOG.info(f"Completed transaction: {buyer_txn_receipt}")
 
-    seller.current_energy -= po.requested_amount
-    seller.energy_purchased += po.requested_amount
-    save(seller)
+    seller.current_energy -= po_candidate.requested_energy
+    seller.energy_purchased += po_candidate.requested_energy
+    save_user(seller)
 
-    buyer.current_energy += po.requested_amount
-    buyer.energy_sold += po.requested_amount
-    save(buyer)
+    buyer.current_energy += po_candidate.requested_energy
+    buyer.energy_sold += po_candidate.requested_energy
+    save_user(buyer)
+
+    save_po(po)
